@@ -1,0 +1,17 @@
+- name: Change the IO scheduler to use specified scheduler
+  become: yes
+  shell: echo "{{ profile.kernel.io_scheduler | quote }}" > "{{ '/sys/block/' + profile.device + '/queue/scheduler' }}"
+
+- name: Limit max IO size to specified size
+  become: yes
+  shell: echo "{{ profile.kernel.max_sectors_kb | quote }}" > "{{ '/sys/block/' + profile.device + '/queue/max_sectors_kb' }}"
+
+- name: Set the readahead window to the specified value
+  become: yes
+  shell: echo "{{ profile.kernel.read_ahead_kb | quote }}" > "{{ '/sys/block/' + profile.device + '/queue/read_ahead_kb' }}"
+
+- name: Change the block device queue depth to specified value
+  become: yes
+  shell: echo "{{ profile.kernel.queue_depth | quote }}" > "{{ '/sys/block/' + profile.device + '/device/queue_depth' }}"
+
+# vim: set ft=yaml.ansible:

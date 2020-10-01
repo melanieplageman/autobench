@@ -1,0 +1,31 @@
+- name: Create the VM
+  hosts: localhost
+  roles:
+  - azure_vm
+
+- name: Set up VM
+  hosts: azure_vm
+  tasks:
+
+  - name: Change permissions and ownership of mounted disk
+    become: yes
+    file:
+    # TODO: look this up based on device provided by user in Ansible facts
+      path: /mnt/resource
+      owner: "{{ ansible_user_id }}"
+      group: "{{ ansible_user_id }}" 
+      mode: '0755'
+  
+  # TODO: handle other distros and set this from distro specified in VM setup
+  - name: Install newer Linux kernel
+    become: yes
+    apt:
+      name: "linux-image-5.8.0-0.bpo.2-amd64-unsigned"
+    register: linux_kernel
+    when: ansible_facts['distribution_version'] is version('5', '<')
+
+  - name: Reboot machine with newer kernel
+    become: yes
+    reboot:
+    when: linux_kernel is changed
+

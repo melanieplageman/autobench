@@ -1,0 +1,3 @@
+[submodule "ansible_collections/azure/azcollection"]
+	path = ansible_collections/azure/azcollection
+	url = git@github.com:ansible-collections/azure.git

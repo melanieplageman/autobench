@@ -1,0 +1,11 @@
+device: sdb
+
+kernel:
+  io_scheduler: mq-deadline
+  max_sectors_kb: 128
+  read_ahead_kb: 4096
+  queue_depth: 64
+
+fio:
+  bs: 8k
+  iodepth: 8

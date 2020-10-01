@@ -1,0 +1,41 @@
+#! /bin/bash
+
+SUBSCRIPTION="DS Data Magnet Incubations"
+
+ansible-playbook <(
+cat <<YAML
+- name: Install the Azure CLI
+  hosts: localhost
+  vars:
+    azure_cli_apt_repo: "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_distribution_release }} main"
+  tasks:
+  - name: Install playbook dependencies
+    become: yes
+    apt:
+      name:
+      - ca-certificates
+      - apt-transport-https
+      - gnupg
+      update_cache: yes
+
+  - name: Download and install Microsoft's signing key
+    become: yes
+    apt_key:
+      url: https://packages.microsoft.com/keys/microsoft.asc
+
+  - name: Add the Azure CLI software repository
+    become: yes
+    apt_repository:
+      repo: "{{ azure_cli_apt_repo }}"
+      update_cache: yes
+
+  - name: Install the Azure CLI
+    become: yes
+    apt: name=azure-cli
+YAML
+)
+
+az login
+
+echo "Setting Azure subscription to '$SUBSCRIPTION'" 1>&2
+az account set -s "$SUBSCRIPTION"

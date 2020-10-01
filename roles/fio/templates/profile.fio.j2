@@ -1,0 +1,14 @@
+[global]
+time_based=1
+ioengine=libaio
+direct=1
+directory=/mnt/resource
+
+[job1]
+name=small_blocks_write
+filesize=4G
+filename=small_blocks_write_data
+bs={{ profile.fio.bs | default('8k')}}
+runtime=10
+rw=write
+iodepth={{ profile.fio.iodepth | default('8')}}

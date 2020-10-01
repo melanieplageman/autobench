@@ -1,0 +1,4 @@
+location: westus2
+resource_group_name: "{{ ansible_user_id }}"
+subscription: "DS Data Magnet Incubations"
+instance_size: Standard_DS1_v2
