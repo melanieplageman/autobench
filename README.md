@@ -9,6 +9,8 @@ Install Python 3.
 ```sh
 git clone git@github.com:melanieplageman/autobench.git
 cd autobench
+git submodule init
+git submodule update
 pip3 install -r requirements.txt
 ```
 
