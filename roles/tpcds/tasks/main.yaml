@@ -1,0 +1,104 @@
+- name: Copy over TPC-DS tools and unzip
+  unarchive:
+    creates: "{{ (ansible_user_dir, tpcds_version) | path_join }}" 
+    src: tpc-ds-tools.zip
+    dest: "{{ ansible_user_dir }}"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: '0755'
+  register: tpcds_unzip
+  tags: setup
+
+- name: Build the TPC-DS tools
+  make: chdir="{{ tpcds_tools_dir }}"
+  tags: setup
+
+- name: Apply the patch
+  ansible.posix.patch:
+    src: fix-tpcds-query-templates.patch
+    basedir: "{{ ansible_user_dir }}"
+    strip: 1
+  tags: setup
+
+- name: Make a directory for the generated queries
+  file:
+    path: "{{ tpcds_tools_dir }}/generated_queries"
+    state: directory
+  tags: setup
+
+- name: Generate TPC-DS queries
+  script: 
+    cmd: gen_queries.sh 
+    chdir: "{{ tpcds_tools_dir }}"
+  tags: setup
+
+- name: Copy the indexes file to the remote
+  copy:
+    src: create_indexes.sql
+    dest: "{{ postgresql_root }}"
+  tags: setup
+
+- name: Make a directory for the output
+  file:
+    path: "{{ tpcds_tools_dir }}/output"
+    state: directory
+  tags: setup
+
+- name: Make a directory for the data
+  file:
+    path: "{{ tpcds_tools_dir }}/data"
+    state: directory
+  tags: setup
+
+- name: Drop the TPC-DS database
+  postgresql_db:
+    name: tpcds
+    login_unix_socket: "{{ postgresql_root }}"
+    login_user: "{{ ansible_user_id }}"
+    state: absent
+  tags: datagen
+
+- name: Create the TPC-DS database
+  postgresql_db:
+    name: tpcds
+    login_unix_socket: "{{ postgresql_root }}"
+    login_user: "{{ ansible_user_id }}"
+  register: tpcds_db
+  tags: datagen
+
+- name: Load the schema
+  postgresql_query:
+    db: tpcds
+    login_unix_socket: "{{ postgresql_root }}"
+    login_user: "{{ ansible_user_id }}"
+    path_to_script: "{{ tpcds_tools_dir }}/tpcds.sql"
+  register: tpcds_schema
+  tags: datagen
+
+- name: Generate and load the data
+  script:
+    cmd: "data_gen_load.sh {{ tpcds_scale }}"
+    chdir: "{{ tpcds_tools_dir }}"
+  environment:
+    PATH: "{{ postgresql_root }}/bin:{{ ansible_env.PATH }}"
+    PGDATABASE: tpcds
+    PGHOST: "{{ postgresql_root }}"
+  tags: datagen
+
+# TODO: Install pg_stat_statements and use it to get more performance info
+- name: Run the TPC-DS queries
+  script:
+    cmd: "run_queries.sh {{ tpcds_output_file }}"
+    chdir: "{{ tpcds_tools_dir }}"
+  environment:
+    PATH: "{{ postgresql_root }}/bin:{{ ansible_env.PATH }}"
+    PGDATABASE: tpcds
+    PGHOST: "{{ postgresql_root }}"
+  tags: run
+
+- name: Fetch the combined results file
+  fetch:
+    src: "{{ tpcds_output_file }}"
+    dest: "{{ playbook_dir }}/results/"
+    flat: yes
+  tags: run

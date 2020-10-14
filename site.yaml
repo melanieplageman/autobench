@@ -28,4 +28,3 @@
     become: yes
     reboot:
     when: linux_kernel is changed
-

@@ -1,0 +1,3 @@
+- name: Clone, configure, and build Postgres
+  hosts: all 
+  roles: [postgres]

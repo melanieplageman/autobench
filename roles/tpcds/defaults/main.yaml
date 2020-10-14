@@ -1,0 +1,5 @@
+# The version of TPC-DS. This must match the actual version in
+# tpc-ds-tools.zip.
+tpcds_version: v2.13.0rc1
+
+tpcds_scale: 1

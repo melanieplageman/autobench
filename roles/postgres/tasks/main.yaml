@@ -1,0 +1,81 @@
+- name: Clone the PostgreSQL git repository
+  git:
+    dest: "{{ postgresql_root }}/source"
+    repo: "{{ postgresql_repo }}"
+    version: "{{ postgresql_revision }}"
+    accept_hostkey: yes
+  register: repo
+
+- name: Stop the PostgreSQL service
+  systemd:
+    name: ab-postgresql
+    scope: user
+    state: stopped
+  failed_when: false
+  when: repo.changed or postgresql_redo
+
+- name: Remove the database
+  file: path="{{ postgresql_root }}/data" state=absent
+  when: repo.changed or postgresql_redo
+
+- name: Uninstall
+  make: chdir="{{ postgresql_root }}/source" target=uninstall
+  failed_when: false
+  when: repo.changed or postgresql_redo
+
+- name: Reinitialize the source tree
+  make: chdir="{{ postgresql_root }}/source" target=distclean
+  failed_when: false
+  when: repo.changed or postgresql_redo
+
+- name: Install compilation dependencies
+  become: yes
+  apt:
+    pkg:
+    - bison
+    - build-essential
+    - flex
+    - libreadline-dev
+    - libsystemd-dev
+    - zlib1g-dev
+  tags: dependencies
+
+- name: Configure
+  command: >
+    ./configure
+    --prefix={{ postgresql_root | quote }}
+    --with-systemd
+  args:
+    chdir: "{{ postgresql_root }}/source"
+  when: repo.changed or postgresql_redo
+
+- name: Compile
+  make: chdir="{{ postgresql_root }}/source" target=all
+  environment:
+    MAKEFLAGS: "-j{{ ansible_processor_vcpus }}"
+  when: repo.changed or postgresql_redo
+
+- name: Install
+  make: chdir="{{ postgresql_root }}/source" target=install
+  when: repo.changed or postgresql_redo
+
+- name: Install the unit file
+  template:
+    src: postgresql.service.j2
+    dest: .config/systemd/user/ab-postgresql.service
+  register: unit_file
+
+- name: Initialize the database
+  command: "{{ postgresql_root | quote }}/bin/initdb -D {{ postgresql_root | quote }}/data"
+  when: repo.changed or postgresql_redo
+
+# TODO: Allow user set postgresql.conf to be loaded onto remote
+- name: Restart the PostgreSQL service
+  systemd:
+    daemon_reload: "{{ unit_file.changed }}"
+    name: ab-postgresql
+    scope: user
+    state: started
+
+- name: Install psycopg2
+  apt: pkg=python3-psycopg2

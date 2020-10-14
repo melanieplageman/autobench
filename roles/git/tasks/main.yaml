@@ -1,0 +1,3 @@
+- name: Install Git
+  become: yes
+  apt: pkg=git

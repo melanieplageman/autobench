@@ -1,0 +1,8 @@
+- name: Install machinectl
+  become: yes
+  apt: pkg=systemd-container
+
+- name: Create the user's unit file directory
+  file:
+    path: .config/systemd/user
+    state: directory

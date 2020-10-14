@@ -1,0 +1,522 @@
+From b7beff5b5f72710a7b2459c29f964bde4e63bfe0 Mon Sep 17 00:00:00 2001
+From: Melanie Plageman <melanieplageman@gmail.com>
+Date: Thu, 8 Oct 2020 16:43:35 -0700
+Subject: [PATCH] Fix query templates
+
+The following query templates have been modified:
+
+2,5,12,14,16,20,21,23,30,32,36,37,40,49,70,77,80,82,86,92,94,95,98
+
+Also add a line to the netezza template to make data and query
+generation work.
+
+Per tools/QGEN.doc, the _END defined statements are supposed to be used
+in this manner
+
+3.8.3	_BEGIN/_END
+The _BEGIN and _END definitions are automatically included at the
+beginning and end of each query in each stream produced by DSQGEN. They
+are intended to provide a single location to add syntax employed by a
+benchmark sponsor in the automation, sequencing and timing of query
+execution.
+
+However, I have yet to determine how best to use the _END defined
+statement and to understand why it is not defined in the vendor-specific
+dialect definition file
+---
+ v2.13.0rc1/query_templates/netezza.tpl |  1 +
+ v2.13.0rc1/query_templates/query12.tpl |  2 +-
+ v2.13.0rc1/query_templates/query14.tpl |  2 +-
+ v2.13.0rc1/query_templates/query16.tpl |  2 +-
+ v2.13.0rc1/query_templates/query2.tpl  |  2 +-
+ v2.13.0rc1/query_templates/query20.tpl |  2 +-
+ v2.13.0rc1/query_templates/query21.tpl |  4 ++--
+ v2.13.0rc1/query_templates/query23.tpl |  8 ++++----
+ v2.13.0rc1/query_templates/query30.tpl |  4 ++--
+ v2.13.0rc1/query_templates/query32.tpl |  4 ++--
+ v2.13.0rc1/query_templates/query36.tpl |  3 ++-
+ v2.13.0rc1/query_templates/query37.tpl |  2 +-
+ v2.13.0rc1/query_templates/query40.tpl |  4 ++--
+ v2.13.0rc1/query_templates/query49.tpl |  2 +-
+ v2.13.0rc1/query_templates/query5.tpl  |  6 +++---
+ v2.13.0rc1/query_templates/query70.tpl |  3 ++-
+ v2.13.0rc1/query_templates/query77.tpl | 12 ++++++------
+ v2.13.0rc1/query_templates/query80.tpl |  6 +++---
+ v2.13.0rc1/query_templates/query82.tpl |  2 +-
+ v2.13.0rc1/query_templates/query86.tpl |  3 ++-
+ v2.13.0rc1/query_templates/query92.tpl |  4 ++--
+ v2.13.0rc1/query_templates/query94.tpl |  2 +-
+ v2.13.0rc1/query_templates/query95.tpl |  2 +-
+ v2.13.0rc1/query_templates/query98.tpl |  2 +-
+ 24 files changed, 44 insertions(+), 40 deletions(-)
+
+diff --git a/v2.13.0rc1/query_templates/netezza.tpl b/v2.13.0rc1/query_templates/netezza.tpl
+index 75488d2..5429ea4 100644
+--- a/v2.13.0rc1/query_templates/netezza.tpl
++++ b/v2.13.0rc1/query_templates/netezza.tpl
+@@ -35,3 +35,4 @@
+ define __LIMITA = "";
+ define __LIMITB = "";
+ define __LIMITC = "limit %d";
++define _END = "";
+diff --git a/v2.13.0rc1/query_templates/query12.tpl b/v2.13.0rc1/query_templates/query12.tpl
+index 78f4dff..45cba27 100644
+--- a/v2.13.0rc1/query_templates/query12.tpl
++++ b/v2.13.0rc1/query_templates/query12.tpl
+@@ -55,7 +55,7 @@ where
+   	and i_category in ('[CATEGORY.1]', '[CATEGORY.2]', '[CATEGORY.3]')
+   	and ws_sold_date_sk = d_date_sk
+ 	and d_date between cast('[SDATE]' as date) 
+-				and (cast('[SDATE]' as date) + 30 days)
++				and (cast('[SDATE]' as date) + '30 days'::interval)
+ group by 
+ 	i_item_id
+         ,i_item_desc 
+diff --git a/v2.13.0rc1/query_templates/query14.tpl b/v2.13.0rc1/query_templates/query14.tpl
+index 7695e45..3fb6335 100644
+--- a/v2.13.0rc1/query_templates/query14.tpl
++++ b/v2.13.0rc1/query_templates/query14.tpl
+@@ -67,7 +67,7 @@ with  cross_items as
+      ,date_dim d3
+  where ws_item_sk = iws.i_item_sk
+    and ws_sold_date_sk = d3.d_date_sk
+-   and d3.d_year between [YEAR] AND [YEAR] + 2)
++   and d3.d_year between [YEAR] AND [YEAR] + 2) x
+  where i_brand_id = brand_id
+       and i_class_id = class_id
+       and i_category_id = category_id
+diff --git a/v2.13.0rc1/query_templates/query16.tpl b/v2.13.0rc1/query_templates/query16.tpl
+index fd38d1b..cc91e6b 100644
+--- a/v2.13.0rc1/query_templates/query16.tpl
++++ b/v2.13.0rc1/query_templates/query16.tpl
+@@ -55,7 +55,7 @@ from
+   ,call_center
+ where
+     d_date between '[YEAR]-[MONTH]-01' and 
+-           (cast('[YEAR]-[MONTH]-01' as date) + 60 days)
++           (cast('[YEAR]-[MONTH]-01' as date) + '60 days'::interval)
+ and cs1.cs_ship_date_sk = d_date_sk
+ and cs1.cs_ship_addr_sk = ca_address_sk
+ and ca_state = '[STATE]'
+diff --git a/v2.13.0rc1/query_templates/query2.tpl b/v2.13.0rc1/query_templates/query2.tpl
+index 4daaeab..07cf27d 100644
+--- a/v2.13.0rc1/query_templates/query2.tpl
++++ b/v2.13.0rc1/query_templates/query2.tpl
+@@ -44,7 +44,7 @@
+         union all
+         select cs_sold_date_sk sold_date_sk
+               ,cs_ext_sales_price sales_price
+-        from catalog_sales)),
++        from catalog_sales) x),
+  wswscs as 
+  (select d_week_seq,
+         sum(case when (d_day_name='Sunday') then sales_price else null end) sun_sales,
+diff --git a/v2.13.0rc1/query_templates/query20.tpl b/v2.13.0rc1/query_templates/query20.tpl
+index 52734c3..5d0489a 100644
+--- a/v2.13.0rc1/query_templates/query20.tpl
++++ b/v2.13.0rc1/query_templates/query20.tpl
+@@ -52,7 +52,7 @@
+    and i_category in ('[CATEGORY.1]', '[CATEGORY.2]', '[CATEGORY.3]')
+    and cs_sold_date_sk = d_date_sk
+  and d_date between cast('[SDATE]' as date) 
+- 				and (cast('[SDATE]' as date) + 30 days)
++ 				and (cast('[SDATE]' as date) + '30 days'::interval)
+  group by i_item_id
+          ,i_item_desc 
+          ,i_category
+diff --git a/v2.13.0rc1/query_templates/query21.tpl b/v2.13.0rc1/query_templates/query21.tpl
+index 8d13b23..c9a6183 100644
+--- a/v2.13.0rc1/query_templates/query21.tpl
++++ b/v2.13.0rc1/query_templates/query21.tpl
+@@ -53,8 +53,8 @@
+      and i_item_sk          = inv_item_sk
+      and inv_warehouse_sk   = w_warehouse_sk
+      and inv_date_sk    = d_date_sk
+-     and d_date between (cast ('[SALES_DATE]' as date) - 30 days)
+-                    and (cast ('[SALES_DATE]' as date) + 30 days)
++     and d_date between (cast ('[SALES_DATE]' as date) - '30 days'::interval)
++                    and (cast ('[SALES_DATE]' as date) + '30 days'::interval)
+    group by w_warehouse_name, i_item_id) x
+  where (case when inv_before > 0 
+              then inv_after / inv_before 
+diff --git a/v2.13.0rc1/query_templates/query23.tpl b/v2.13.0rc1/query_templates/query23.tpl
+index 55893a0..5fecaaa 100644
+--- a/v2.13.0rc1/query_templates/query23.tpl
++++ b/v2.13.0rc1/query_templates/query23.tpl
+@@ -56,7 +56,7 @@
+         where ss_customer_sk = c_customer_sk
+          and ss_sold_date_sk = d_date_sk
+          and d_year in ([YEAR],[YEAR]+1,[YEAR]+2,[YEAR]+3) 
+-        group by c_customer_sk)),
++        group by c_customer_sk) x),
+  best_ss_customer as
+  (select c_customer_sk,sum(ss_quantity*ss_sales_price) ssales
+   from store_sales
+@@ -84,7 +84,7 @@ from
+          and d_moy = [MONTH] 
+          and ws_sold_date_sk = d_date_sk 
+          and ws_item_sk in (select item_sk from frequent_ss_items)
+-         and ws_bill_customer_sk in (select c_customer_sk from best_ss_customer)) 
++         and ws_bill_customer_sk in (select c_customer_sk from best_ss_customer)) x
+  [_LIMITC]; 
+  
+  with frequent_ss_items as
+@@ -106,7 +106,7 @@ from
+         where ss_customer_sk = c_customer_sk
+          and ss_sold_date_sk = d_date_sk
+          and d_year in ([YEAR],[YEAR]+1,[YEAR]+2,[YEAR]+3)
+-        group by c_customer_sk)),
++        group by c_customer_sk) x),
+  best_ss_customer as
+  (select c_customer_sk,sum(ss_quantity*ss_sales_price) ssales
+   from store_sales
+@@ -139,6 +139,6 @@ from
+          and ws_item_sk in (select item_sk from frequent_ss_items)
+          and ws_bill_customer_sk in (select c_customer_sk from best_ss_customer)
+          and ws_bill_customer_sk = c_customer_sk
+-       group by c_last_name,c_first_name) 
++       group by c_last_name,c_first_name) x
+      order by c_last_name,c_first_name,sales
+   [_LIMITC];
+diff --git a/v2.13.0rc1/query_templates/query30.tpl b/v2.13.0rc1/query_templates/query30.tpl
+index f552845..2977a73 100644
+--- a/v2.13.0rc1/query_templates/query30.tpl
++++ b/v2.13.0rc1/query_templates/query30.tpl
+@@ -50,7 +50,7 @@
+          ,ca_state)
+  [_LIMITA] select [_LIMITB] c_customer_id,c_salutation,c_first_name,c_last_name,c_preferred_cust_flag
+        ,c_birth_day,c_birth_month,c_birth_year,c_birth_country,c_login,c_email_address
+-       ,c_last_review_date_sk,ctr_total_return
++       ,c_last_review_date,ctr_total_return
+  from customer_total_return ctr1
+      ,customer_address
+      ,customer
+@@ -62,5 +62,5 @@
+        and ctr1.ctr_customer_sk = c_customer_sk
+  order by c_customer_id,c_salutation,c_first_name,c_last_name,c_preferred_cust_flag
+                   ,c_birth_day,c_birth_month,c_birth_year,c_birth_country,c_login,c_email_address
+-                  ,c_last_review_date_sk,ctr_total_return
++                  ,c_last_review_date,ctr_total_return
+ [_LIMITC];
+diff --git a/v2.13.0rc1/query_templates/query32.tpl b/v2.13.0rc1/query_templates/query32.tpl
+index c04190d..c1ea81f 100644
+--- a/v2.13.0rc1/query_templates/query32.tpl
++++ b/v2.13.0rc1/query_templates/query32.tpl
+@@ -46,7 +46,7 @@ where
+ i_manufact_id = [IMID]
+ and i_item_sk = cs_item_sk 
+ and d_date between '[CSDATE]' and 
+-        (cast('[CSDATE]' as date) + 90 days)
++        (cast('[CSDATE]' as date) + '90 days'::interval)
+ and d_date_sk = cs_sold_date_sk 
+ and cs_ext_discount_amt  
+      > ( 
+@@ -58,7 +58,7 @@ and cs_ext_discount_amt
+          where 
+               cs_item_sk = i_item_sk 
+           and d_date between '[CSDATE]' and
+-                             (cast('[CSDATE]' as date) + 90 days)
++                             (cast('[CSDATE]' as date) + '90 days'::interval)
+           and d_date_sk = cs_sold_date_sk 
+       ) 
+ [_LIMITC]; 
+diff --git a/v2.13.0rc1/query_templates/query36.tpl b/v2.13.0rc1/query_templates/query36.tpl
+index ca255bd..de5a6f5 100644
+--- a/v2.13.0rc1/query_templates/query36.tpl
++++ b/v2.13.0rc1/query_templates/query36.tpl
+@@ -44,7 +44,7 @@
+  define STATE_H=distmember(fips_county,[STATENUMBER.8], 3);
+  define _LIMIT=100;
+  
+- [_LIMITA] select [_LIMITB] 
++ [_LIMITA] select * from (select [_LIMITB]
+     sum(ss_net_profit)/sum(ss_ext_sales_price) as gross_margin
+    ,i_category
+    ,i_class
+@@ -66,6 +66,7 @@
+  and s_state in ('[STATE_A]','[STATE_B]','[STATE_C]','[STATE_D]',
+                  '[STATE_E]','[STATE_F]','[STATE_G]','[STATE_H]')
+  group by rollup(i_category,i_class)
++) as sub
+  order by
+    lochierarchy desc
+   ,case when lochierarchy = 0 then i_category end
+diff --git a/v2.13.0rc1/query_templates/query37.tpl b/v2.13.0rc1/query_templates/query37.tpl
+index 1f52fc7..dba8251 100644
+--- a/v2.13.0rc1/query_templates/query37.tpl
++++ b/v2.13.0rc1/query_templates/query37.tpl
+@@ -45,7 +45,7 @@
+  where i_current_price between [PRICE] and [PRICE] + 30
+  and inv_item_sk = i_item_sk
+  and d_date_sk=inv_date_sk
+- and d_date between cast('[INVDATE]' as date) and (cast('[INVDATE]' as date) +  60 days)
++ and d_date between cast('[INVDATE]' as date) and (cast('[INVDATE]' as date) +  '60 days'::interval)
+  and i_manufact_id in ([MANUFACT_ID.1],[MANUFACT_ID.2],[MANUFACT_ID.3],[MANUFACT_ID.4])
+  and inv_quantity_on_hand between 100 and 500
+  and cs_item_sk = i_item_sk
+diff --git a/v2.13.0rc1/query_templates/query40.tpl b/v2.13.0rc1/query_templates/query40.tpl
+index 98d188a..d81721e 100644
+--- a/v2.13.0rc1/query_templates/query40.tpl
++++ b/v2.13.0rc1/query_templates/query40.tpl
+@@ -55,8 +55,8 @@
+  and i_item_sk          = cs_item_sk
+  and cs_warehouse_sk    = w_warehouse_sk 
+  and cs_sold_date_sk    = d_date_sk
+- and d_date between (cast ('[SALES_DATE]' as date) - 30 days)
+-                and (cast ('[SALES_DATE]' as date) + 30 days) 
++ and d_date between (cast ('[SALES_DATE]' as date) - '30 days'::interval)
++                and (cast ('[SALES_DATE]' as date) + '30 days'::interval)
+  group by
+     w_state,i_item_id
+  order by w_state,i_item_id
+diff --git a/v2.13.0rc1/query_templates/query49.tpl b/v2.13.0rc1/query_templates/query49.tpl
+index ecd682e..7508c4f 100644
+--- a/v2.13.0rc1/query_templates/query49.tpl
++++ b/v2.13.0rc1/query_templates/query49.tpl
+@@ -159,6 +159,6 @@
+  or 
+  store.currency_rank <= 10
+  )
+- )
++ ) x
+  order by 1,4,5,2
+  [_LIMITC];
+diff --git a/v2.13.0rc1/query_templates/query5.tpl b/v2.13.0rc1/query_templates/query5.tpl
+index ce7552e..0334157 100644
+--- a/v2.13.0rc1/query_templates/query5.tpl
++++ b/v2.13.0rc1/query_templates/query5.tpl
+@@ -63,7 +63,7 @@
+      store
+  where date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date) 
+-                  and (cast('[SALES_DATE]' as date) +  14 days)
++                  and (cast('[SALES_DATE]' as date) +  '14 days'::interval)
+        and store_sk = s_store_sk
+  group by s_store_id)
+  ,
+@@ -94,7 +94,7 @@
+      catalog_page
+  where date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  14 days)
++                  and (cast('[SALES_DATE]' as date) +  '14 days'::interval)
+        and page_sk = cp_catalog_page_sk
+  group by cp_catalog_page_id)
+  ,
+@@ -127,7 +127,7 @@
+      web_site
+  where date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  14 days)
++                  and (cast('[SALES_DATE]' as date) +  '14 days'::interval)
+        and wsr_web_site_sk = web_site_sk
+  group by web_site_id)
+  [_LIMITA] select [_LIMITB] channel
+diff --git a/v2.13.0rc1/query_templates/query70.tpl b/v2.13.0rc1/query_templates/query70.tpl
+index 94fc905..cc7e647 100644
+--- a/v2.13.0rc1/query_templates/query70.tpl
++++ b/v2.13.0rc1/query_templates/query70.tpl
+@@ -35,7 +35,7 @@
+  define DMS = random(1176,1224,uniform);
+  define _LIMIT=100;
+  
+- [_LIMITA] select [_LIMITB] 
++ [_LIMITA] select * from (select [_LIMITB]
+     sum(ss_net_profit) as total_sum
+    ,s_state
+    ,s_county
+@@ -65,6 +65,7 @@
+                where ranking <= 5
+              )
+  group by rollup(s_state,s_county)
++) as sub
+  order by
+    lochierarchy desc
+   ,case when lochierarchy = 0 then s_state end
+diff --git a/v2.13.0rc1/query_templates/query77.tpl b/v2.13.0rc1/query_templates/query77.tpl
+index e3d52dd..0a5b7e6 100644
+--- a/v2.13.0rc1/query_templates/query77.tpl
++++ b/v2.13.0rc1/query_templates/query77.tpl
+@@ -45,7 +45,7 @@
+       store
+  where ss_sold_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date) 
+-                  and (cast('[SALES_DATE]' as date) +  30 days) 
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+        and ss_store_sk = s_store_sk
+  group by s_store_sk)
+  ,
+@@ -58,7 +58,7 @@
+       store
+  where sr_returned_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  30 days)
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+        and sr_store_sk = s_store_sk
+  group by s_store_sk), 
+  cs as
+@@ -69,7 +69,7 @@
+       date_dim
+  where cs_sold_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  30 days)
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+  group by cs_call_center_sk 
+  ), 
+  cr as
+@@ -80,7 +80,7 @@
+       date_dim
+  where cr_returned_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  30 days)
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+  group by cr_call_center_sk
+  ), 
+  ws as
+@@ -92,7 +92,7 @@
+       web_page
+  where ws_sold_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  30 days)
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+        and ws_web_page_sk = wp_web_page_sk
+  group by wp_web_page_sk), 
+  wr as
+@@ -104,7 +104,7 @@
+       web_page
+  where wr_returned_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  30 days)
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+        and wr_web_page_sk = wp_web_page_sk
+  group by wp_web_page_sk)
+  [_LIMITA] select [_LIMITB] channel
+diff --git a/v2.13.0rc1/query_templates/query80.tpl b/v2.13.0rc1/query_templates/query80.tpl
+index d51a4da..8162fa7 100644
+--- a/v2.13.0rc1/query_templates/query80.tpl
++++ b/v2.13.0rc1/query_templates/query80.tpl
+@@ -49,7 +49,7 @@
+      promotion
+  where ss_sold_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date) 
+-                  and (cast('[SALES_DATE]' as date) +  30 days)
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+        and ss_store_sk = s_store_sk
+        and ss_item_sk = i_item_sk
+        and i_current_price > 50
+@@ -70,7 +70,7 @@
+      promotion
+  where cs_sold_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  30 days)
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+         and cs_catalog_page_sk = cp_catalog_page_sk
+        and cs_item_sk = i_item_sk
+        and i_current_price > 50
+@@ -91,7 +91,7 @@ group by cp_catalog_page_id)
+      promotion
+  where ws_sold_date_sk = d_date_sk
+        and d_date between cast('[SALES_DATE]' as date)
+-                  and (cast('[SALES_DATE]' as date) +  30 days)
++                  and (cast('[SALES_DATE]' as date) +  '30 days'::interval)
+         and ws_web_site_sk = web_site_sk
+        and ws_item_sk = i_item_sk
+        and i_current_price > 50
+diff --git a/v2.13.0rc1/query_templates/query82.tpl b/v2.13.0rc1/query_templates/query82.tpl
+index 8f8c0ff..2844528 100644
+--- a/v2.13.0rc1/query_templates/query82.tpl
++++ b/v2.13.0rc1/query_templates/query82.tpl
+@@ -45,7 +45,7 @@
+  where i_current_price between [PRICE] and [PRICE]+30
+  and inv_item_sk = i_item_sk
+  and d_date_sk=inv_date_sk
+- and d_date between cast('[INVDATE]' as date) and (cast('[INVDATE]' as date) +  60 days)
++ and d_date between cast('[INVDATE]' as date) and (cast('[INVDATE]' as date) +  '60 days'::interval)
+  and i_manufact_id in ([MANUFACT_ID.1],[MANUFACT_ID.2],[MANUFACT_ID.3],[MANUFACT_ID.4])
+  and inv_quantity_on_hand between 100 and 500
+  and ss_item_sk = i_item_sk
+diff --git a/v2.13.0rc1/query_templates/query86.tpl b/v2.13.0rc1/query_templates/query86.tpl
+index bb2bb3a..cfb6810 100644
+--- a/v2.13.0rc1/query_templates/query86.tpl
++++ b/v2.13.0rc1/query_templates/query86.tpl
+@@ -34,7 +34,7 @@
+ -- 
+  define DMS = random(1176,1224,uniform);
+  define _LIMIT=100; 
+- [_LIMITA] select [_LIMITB]  
++ [_LIMITA] select * from (select [_LIMITB]
+     sum(ws_net_paid) as total_sum
+    ,i_category
+    ,i_class
+@@ -52,6 +52,7 @@
+  and d1.d_date_sk = ws_sold_date_sk
+  and i_item_sk  = ws_item_sk
+  group by rollup(i_category,i_class)
++) as sub
+  order by
+    lochierarchy desc,
+    case when lochierarchy = 0 then i_category end,
+diff --git a/v2.13.0rc1/query_templates/query92.tpl b/v2.13.0rc1/query_templates/query92.tpl
+index 655b949..4303d92 100644
+--- a/v2.13.0rc1/query_templates/query92.tpl
++++ b/v2.13.0rc1/query_templates/query92.tpl
+@@ -48,7 +48,7 @@ where
+ i_manufact_id = [IMID]
+ and i_item_sk = ws_item_sk 
+ and d_date between '[WSDATE]' and 
+-        (cast('[WSDATE]' as date) + 90 days)
++        (cast('[WSDATE]' as date) + '90 days'::interval)
+ and d_date_sk = ws_sold_date_sk 
+ and ws_ext_discount_amt  
+      > ( 
+@@ -60,7 +60,7 @@ and ws_ext_discount_amt
+          WHERE 
+               ws_item_sk = i_item_sk 
+           and d_date between '[WSDATE]' and
+-                             (cast('[WSDATE]' as date) + 90 days)
++                             (cast('[WSDATE]' as date) + '90 days'::interval)
+           and d_date_sk = ws_sold_date_sk 
+       ) 
+ order by sum(ws_ext_discount_amt)
+diff --git a/v2.13.0rc1/query_templates/query94.tpl b/v2.13.0rc1/query_templates/query94.tpl
+index a0902ce..b47807a 100644
+--- a/v2.13.0rc1/query_templates/query94.tpl
++++ b/v2.13.0rc1/query_templates/query94.tpl
+@@ -49,7 +49,7 @@ from
+   ,web_site
+ where
+     d_date between '[YEAR]-[MONTH]-01' and 
+-           (cast('[YEAR]-[MONTH]-01' as date) + 60 days)
++           (cast('[YEAR]-[MONTH]-01' as date) + '60 days'::interval)
+ and ws1.ws_ship_date_sk = d_date_sk
+ and ws1.ws_ship_addr_sk = ca_address_sk
+ and ca_state = '[STATE]'
+diff --git a/v2.13.0rc1/query_templates/query95.tpl b/v2.13.0rc1/query_templates/query95.tpl
+index 3919a7e..102d975 100644
+--- a/v2.13.0rc1/query_templates/query95.tpl
++++ b/v2.13.0rc1/query_templates/query95.tpl
+@@ -54,7 +54,7 @@ from
+   ,web_site
+ where
+     d_date between '[YEAR]-[MONTH]-01' and 
+-           (cast('[YEAR]-[MONTH]-01' as date) + 60 days)
++           (cast('[YEAR]-[MONTH]-01' as date) + '60 days'::interval)
+ and ws1.ws_ship_date_sk = d_date_sk
+ and ws1.ws_ship_addr_sk = ca_address_sk
+ and ca_state = '[STATE]'
+diff --git a/v2.13.0rc1/query_templates/query98.tpl b/v2.13.0rc1/query_templates/query98.tpl
+index a6b859f..19ebd86 100644
+--- a/v2.13.0rc1/query_templates/query98.tpl
++++ b/v2.13.0rc1/query_templates/query98.tpl
+@@ -54,7 +54,7 @@ where
+   	and i_category in ('[CATEGORY.1]', '[CATEGORY.2]', '[CATEGORY.3]')
+   	and ss_sold_date_sk = d_date_sk
+ 	and d_date between cast('[SDATE]' as date) 
+-				and (cast('[SDATE]' as date) + 30 days)
++				and (cast('[SDATE]' as date) + '30 days'::interval)
+ group by 
+ 	i_item_id
+         ,i_item_desc 
+-- 
+2.20.1
+

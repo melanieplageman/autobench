@@ -1,0 +1,1 @@
+postgresql_root: "{{ ansible_user_dir }}/.autobench/postgresql"

@@ -1,0 +1,3 @@
+- name: Set up TPC-DS tools and run TPC-DS
+  hosts: all 
+  roles: [tpcds]

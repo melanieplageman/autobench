@@ -1,0 +1,2 @@
+tpcds_tools_dir: "{{ ansible_user_dir }}/{{ tpcds_version }}/tools"
+tpcds_output_file: "{{ tpcds_tools_dir }}/output/{{ postgresql_revision | quote }}_{{ tpcds_scale }}.csv"
