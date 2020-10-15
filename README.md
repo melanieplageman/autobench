@@ -17,7 +17,7 @@ autobench supports running the [TPC-DS](https://www.tpc.org/tpcds/default5.asp) 
 Install Python 3.
 
 ```sh
-git clone git@github.com:melanieplageman/autobench.git
+git clone --recurse-submodules git@github.com:melanieplageman/autobench.git
 cd autobench
 pip3 install -r requirements.txt
 ```
