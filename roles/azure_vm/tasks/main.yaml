@@ -26,15 +26,6 @@
     name: nsg-sshallow-001
     purge_default_rules: yes
     purge_rules: yes
-    rules:
-    - name: AllowSSH
-      protocol: Tcp
-      destination_port_range: 22
-      access: Allow
-      priority: 100
-      direction: Inbound
-      source_address_prefix:
-      - "{{ ipify_public_ip.ansible_facts.ipify_public_ip }}"
   register: security_group
 
 - name: Create a Virtual Network
