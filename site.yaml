@@ -1,30 +1,13 @@
-- name: Create the VM
+- name: Create the VM in Azure
   hosts: localhost
-  roles:
-  - azure_vm
+  roles: [azure_vm]
+  tasks:
+  - name: Reload Ansible's inventory file
+    meta: refresh_inventory
 
-- name: Set up VM
+- name: Do initial setup on the remote host
   hosts: azure_vm
   tasks:
-
-  - name: Change permissions and ownership of mounted disk
-    become: yes
-    file:
-    # TODO: look this up based on device provided by user in Ansible facts
-      path: /mnt/resource
-      owner: "{{ ansible_user_id }}"
-      group: "{{ ansible_user_id }}" 
-      mode: '0755'
-  
-  # TODO: handle other distros and set this from distro specified in VM setup
-  - name: Install newer Linux kernel
-    become: yes
-    apt:
-      name: "linux-image-5.8.0-0.bpo.2-amd64-unsigned"
-    register: linux_kernel
-    when: ansible_facts['distribution_version'] is version('5', '<')
-
-  - name: Reboot machine with newer kernel
-    become: yes
-    reboot:
-    when: linux_kernel is changed
+  - import_role:
+      name: azure_vm
+      tasks_from: remote

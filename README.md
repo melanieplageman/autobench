@@ -39,6 +39,12 @@ ansible-playbook site.yaml -e "privatekey=PRIVATE_KEY_FILE"
 The instance size, location, subscription, and resource group name are all parameterizable.
 Edit the `roles/azure_vm/defaults/main.yaml` file. You can also override the defaults without editing the file when running the playbook. See the [ansible docs](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#defining-variables-at-runtime) for more info.
 
+Once you have run the `site.yaml` playbook once, if you make a change, other than deleting the VM or detaching the data disk, and would like to run it again, you will need to skip the disk-attach tag to avoid erroring out. This is due to a bug in the Ansible Azure module. The role that provisions the Azure VM will attempt to attach the data disk again and will error out. Run it like this any time you want to run it when the disk is already attached.
+
+```sh
+ansible-playbook site.yaml -e "privatekey=PRIVATE_KEY_FILE" --skip-tags "disk-attach"
+```
+
 ## Running an fio job
 
 To run fio with certain kernel settings, make a profile in `profiles` (see `profiles/default.yaml` for an example) and run it, overriding the `profile_name` default:
@@ -115,7 +121,7 @@ Ansible project directory layout hints
 `hosts`: your inventory of hosts
 
 `site.yaml`: the main Ansible playbook in this project currently. It runs the
-Azure VM role and will load a newer Linux kernel and restart the VM. Though you
+Azure VM role tasks. First it provisions the Azure VM and associated resources, then it runs a set up tasks to do setup on the provisioned VM, including loading a newer Linux kernel and restarting the VM. Though you
 can run the Postgres and TPC-DS roles on other hosts, currently the playbook is
 geared toward an environment where you can provision a brand new VM for the
 explicit purpose of doing this work.
@@ -139,8 +145,11 @@ This is the target for the formatted output which will be fetched from the targe
 This directory houses most of the tasks for all of the plays in this project.
 - `azure_vm` role:
   - `defaults` contain parameters that the user may want to set
-  - `tasks` contains the main tasks file
+  - `tasks`
+    - `main.yaml` provisions the Azure VM and associated resources as well as provisioning and attaching the data disk
+    - `remote.yaml` does required setup on the Azure VM once it is provisioned
   - `templates` contains the template that is used to generate the `hosts` file that is the Ansible inventory. The Azure VM is added here
+  - `vars` contains variables that should not be changed by the playbook user - in this case the name of the data disk device after provisioning the VM and data disk
 - `fio` role:
   - `defaults` contain parameters that the user may want to set
   - `tasks` contains two playbooks

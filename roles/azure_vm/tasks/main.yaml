@@ -74,22 +74,14 @@
       primary: True
   register: network_interface
 
-# TODO: create a storage account and use it below
-
-# not able to attach storage to VM currently due to bug
-# https://github.com/ansible-collections/azure/issues/146
-# after bug is resolved, will be able to put managed_disk_id in VM
-# until then, I can only make disks that are less than 1 TB
-# - name: Create a data disk
-#   azure_rm_manageddisk:
-#     name: dd-test-data-disk2
-#     resource_group: "{{ resource_group.state.name }}"
-#     create_option: empty
-#     storage_account_type: Premium_LRS
-#     os_type: linux 
-#     attach_caching: read_only 
-#     disk_size_gb: 10
-#   register: data_disk
+- name: Create a Storage Account
+  azure_rm_storageaccount:
+    name: "stvmiobench{{ location }}001"
+    resource_group: "{{ resource_group.state.name }}"
+    account_type: Premium_LRS
+    force_delete_nonempty: yes
+    kind: StorageV2
+  register: storage_account
 
 - name: Create a VM
   azure_rm_virtualmachine:
@@ -101,6 +93,11 @@
     virtual_network: "{{ virtual_network.state.name }}"
     subnet: "{{ subnet.state.name }}"
     network_interfaces: "{{ network_interface.state.name }}"
+    # not supported for Premium_LRS
+    # boot_diagnostics:
+    #   enabled: yes
+    #   storage_account: "{{ storage_account.state.name }}"
+    managed_disk_type: Premium_LRS
     image:
       offer: debian-10
       publisher: Debian
@@ -109,12 +106,31 @@
     ssh_public_keys:
     - path: "/home/{{ ansible_user_id }}/.ssh/authorized_keys"
       key_data: "{{ keypair.public_key }}"
-    managed_disk_type: Premium_LRS
-    data_disks:
-    - lun: 0
-      disk_size_gb: 50
-      caching: None
-      managed_disk_type: Premium_LRS
+  register: vm
+
+# not able to attach storage to VM currently due to bug
+# https://github.com/ansible-collections/azure/issues/146
+# after bug is resolved, will be able to set managed_disk_id in VM
+# and managed_by in data disk
+# until then, need to manually attach the disk
+- name: Create a Data Disk
+  azure_rm_manageddisk:
+    name: dd-001
+    resource_group: "{{ resource_group.state.name }}"
+    create_option: empty
+    storage_account_type: Premium_LRS
+    os_type: linux
+    attach_caching: ''
+    disk_size_gb: 2000
+    # managed-by doesn't work. error says:
+    # Unsupported parameters for (azure_rm_manageddisk) module:
+    # managed-by Supported parameters include: ad_user,
+    # adfs_authority_url, api_profile, append_tags, attach_caching,
+    # auth_source, cert_validation_mode, client_id, cloud_environment,
+    # create_option, disk_size_gb, location, lun, managed_by, name,
+    # os_type, password, profile, resource_group, secret, source_uri,
+    # state, storage_account_type, subscription_id, tags, tenant, zone
+    #managed-by: vmiobench-001
 
 - name: VM's public IP address
   debug: var=public_ip_address.state.ip_address
@@ -124,5 +140,16 @@
     dest: "{{ playbook_dir }}/hosts"
     src: hosts.j2
 
-- name: Reload Ansible's inventory file
-  meta: refresh_inventory
+# Followed these instructions https://docs.microsoft.com/en-us/azure/virtual-machines/linux/add-disk
+# Note that because this is done directly through the Azure CLI, we do not have the idempotency that Ansible usually provides.
+# If the disk is already attached, this will error out
+# This is unfortunate but unavoidable due to the bug
+# If you have to run this playbook when you have already attached a disk at lun 1, run the playbook with --skip_tags="disk-attach" (or detach the disk)
+- name: Attach the Data Disk to the VM
+  command: >
+    az vm disk attach
+    -g "{{ resource_group_name | quote }}"
+    --vm-name vmiobench-001
+    --name dd-001
+    --lun 1
+  tags: disk-attach

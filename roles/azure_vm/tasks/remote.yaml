@@ -1,0 +1,57 @@
+- name: start
+  include_vars:
+    file: remote.yaml
+
+- name: Install parted
+  become: yes
+  apt: name=parted
+
+- name: Format the disk
+  become: yes
+  parted:
+    device: "{{ azure_vm_disk_device }}"
+    label: gpt
+    fs_type: ext4
+    name: data
+    state: present
+    number: 1
+  register: formatted_disk
+
+- name: Build the Filesystem
+  become: yes
+  filesystem:
+    fstype: ext4
+    dev: "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+
+- name: Make a directory for the filesystem
+  become: yes
+  file: path=/datadrive state=directory
+
+- name: Mount the filesystem
+  become: yes
+  ansible.posix.mount:
+    path: /datadrive
+    src: "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+    fstype: ext4
+    state: mounted
+
+- name: Change permissions and ownership of mounted disk
+  become: yes
+  file:
+    path: /datadrive
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}" 
+    mode: '0755'
+
+  #TODO: handle other distros and set this from distro specified in VM setup
+- name: Install newer Linux kernel
+  become: yes
+  apt:
+    name: "linux-image-5.8.0-0.bpo.2-amd64-unsigned"
+  register: linux_kernel
+  when: ansible_facts['distribution_version'] is version('5', '<')
+
+- name: Reboot machine with newer kernel
+  become: yes
+  reboot:
+  when: linux_kernel is changed
