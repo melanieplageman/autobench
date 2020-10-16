@@ -1,6 +1,6 @@
 - name: Copy over TPC-DS tools and unzip
   unarchive:
-    creates: "{{ (ansible_user_dir, tpcds_version) | path_join }}" 
+    creates: "{{ (ansible_user_dir, tpcds_version) | path_join }}"
     src: tpc-ds-tools.zip
     dest: "{{ ansible_user_dir }}"
     owner: "{{ ansible_user_id }}"
