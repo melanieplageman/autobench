@@ -7,6 +7,9 @@
     file: "{{ (playbook_dir, 'profiles', profile_name + '.yaml') | path_join }}"
     name: profile
 
+- debug:
+    var: profile
+
 - import_tasks: kernel_settings.yaml
 
 - name: Create a jobs directory on the target host

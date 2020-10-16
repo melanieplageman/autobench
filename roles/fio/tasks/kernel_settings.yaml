@@ -1,17 +1,30 @@
+- name: Print Azure VM disk device
+  debug:
+    msg: "Ensure you have set 'device' to '/dev/disk/azure/scsi1/lun1' in the profile you are running."
+
+- name: Get real Device Name
+  stat:
+    path: "{{ profile.device }}"
+  register: device
+
+- name: Set host fact for the device name
+  set_fact: device="{{ device.stat.lnk_source | basename }}"
+
+
 - name: Change the IO scheduler to use specified scheduler
   become: yes
-  shell: echo "{{ profile.kernel.io_scheduler | quote }}" > "{{ '/sys/block/' + profile.device + '/queue/scheduler' }}"
+  shell: echo "{{ profile.kernel.io_scheduler | quote }}" > "{{ '/sys/block/' + device + '/queue/scheduler' }}"
 
 - name: Limit max IO size to specified size
   become: yes
-  shell: echo "{{ profile.kernel.max_sectors_kb | quote }}" > "{{ '/sys/block/' + profile.device + '/queue/max_sectors_kb' }}"
+  shell: echo "{{ profile.kernel.max_sectors_kb | quote }}" > "{{ '/sys/block/' + device + '/queue/max_sectors_kb' }}"
 
 - name: Set the readahead window to the specified value
   become: yes
-  shell: echo "{{ profile.kernel.read_ahead_kb | quote }}" > "{{ '/sys/block/' + profile.device + '/queue/read_ahead_kb' }}"
+  shell: echo "{{ profile.kernel.read_ahead_kb | quote }}" > "{{ '/sys/block/' + device + '/queue/read_ahead_kb' }}"
 
 - name: Change the block device queue depth to specified value
   become: yes
-  shell: echo "{{ profile.kernel.queue_depth | quote }}" > "{{ '/sys/block/' + profile.device + '/device/queue_depth' }}"
+  shell: echo "{{ profile.kernel.queue_depth | quote }}" > "{{ '/sys/block/' + device + '/device/queue_depth' }}"
 
 # vim: set ft=yaml.ansible:

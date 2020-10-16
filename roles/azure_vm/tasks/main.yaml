@@ -120,6 +120,7 @@
     create_option: empty
     storage_account_type: Premium_LRS
     os_type: linux
+    # TODO: consider parameterizing
     attach_caching: ''
     disk_size_gb: 2000
     # managed-by doesn't work. error says:
@@ -153,3 +154,7 @@
     --name dd-001
     --lun 1
   tags: disk-attach
+
+- name: Print Azure VM disk device
+  debug:
+    msg: "Azure VM disk attached. Use '/dev/disk/azure/scsi1/lun1' for device name in future tasks requiring device name"
