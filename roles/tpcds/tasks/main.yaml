@@ -99,6 +99,6 @@
 - name: Fetch the combined results file
   fetch:
     src: "{{ tpcds_output_file }}"
-    dest: "{{ playbook_dir }}/results/"
+    dest: "{{ playbook_dir }}/results/tpcds/"
     flat: yes
   tags: run

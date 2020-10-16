@@ -42,7 +42,8 @@
 - name: Copy fio output file from host
   fetch:
     src: "{{ (ansible_user_dir, 'fio_output', profile_name + '.json') | path_join }}"
-    dest: "{{ (playbook_dir, 'output') | path_join }}"
+    dest: "{{ playbook_dir }}/results/fio/"
+    flat: yes
 
 - name: Delete fio data from target
   file:

@@ -51,7 +51,7 @@ To run fio with certain kernel settings, make a profile in `profiles` (see `prof
 ```sh
 ansible-playbook fio.yaml -e "privatekey=PRIVATE_KEY_FILE" -e "profile_name=PROFILE_NAME"
 ```
-To view a graph of completion latencies for all fio jobs run this way, run `jupyter notebook` in this directory and check out `clat.ipynb`.
+To view a graph of completion latencies for all fio jobs run this way, run `jupyter notebook` in `results/fio` and check out `clat.ipynb`.
 You'll need to replace the `json_source_dir` to point to your own.
 
 ## Running TPC-DS
@@ -174,3 +174,4 @@ This directory houses most of the tasks for all of the plays in this project.
 
 # TODO
 - Add a pgbench role which depends on Postgres
+- Add [git filters](https://pascalbugnion.net/blog/ipython-notebooks-and-git.html) for iPython notebooks
