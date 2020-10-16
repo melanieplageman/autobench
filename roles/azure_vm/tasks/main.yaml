@@ -122,7 +122,7 @@
     os_type: linux
     # TODO: consider parameterizing
     attach_caching: ''
-    disk_size_gb: 2000
+    disk_size_gb: "{{ disk_size }}"
     # managed-by doesn't work. error says:
     # Unsupported parameters for (azure_rm_manageddisk) module:
     # managed-by Supported parameters include: ad_user,
