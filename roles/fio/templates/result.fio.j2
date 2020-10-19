@@ -1,0 +1,3 @@
+<!-- {{ profile.host.instance_size }}, {{profile.disk.size }}, {{ profile.fio.rw }}, {{ profile.fio.runtime}}, {{ profile.fio.bs }}, {{ profile.fio.iodepth}}, {{ profile.kernel.queue_depth }}, {{ profile.kernel.nr_requests }}, {{ profile.kernel.max_sectors_kb }}, {{ profile.kernel.read_ahead_kb }}, {{ profile.kernel.io_scheduler }}, {{ ansible_facts['kernel'] }} -->
+
+{{ profile.host.instance_size ',' profile.disk.size ',' profile.fio.rw ',' profile.fio.runtime ',' profile.fio.bs ',' profile.fio.iodepth ',' profile.kernel.queue_depth ',' profile.kernel.nr_requests ',' profile.kernel.max_sectors_kb ',' profile.kernel.read_ahead_kb ',' profile.kernel.io_scheduler ',' ansible_facts['kernel'] }}

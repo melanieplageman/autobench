@@ -50,4 +50,11 @@
     path: "{{ (run_dir, 'fio_data') | path_join }}"
     state: absent
 
+- name: Template Workload Settings and IUT Parameters to Results Dir
+  template:
+    src: result.fio.j2
+    dest: "{{ playbook_dir }}/results/fio/{{ profile_name + '_settings.csv' }}"
+  delegate_to: localhost
+
+
 # vim: set ft=yaml.ansible:

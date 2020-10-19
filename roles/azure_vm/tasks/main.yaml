@@ -2,10 +2,15 @@
 # https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/naming-and-tagging
 # with consideration of naming scope
 
-- name: Get my IP address"
-  tags: test_ip
-  community.general.ipify_facts:
-  register: ipify_public_ip
+# TODO: update the resource names to make them easier to search?
+
+- name: Load profile
+  include_vars:
+    file: "{{ (playbook_dir, 'profiles', profile_name + '.yaml') | path_join }}"
+    name: profile
+
+- debug:
+    var: profile
 
 - name: Generate OpenSSH public key
   openssh_keypair:

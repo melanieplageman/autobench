@@ -1,3 +1,9 @@
+host:
+  instance_size: Standard_F32s_v2
+
+disk:
+  size: 2000
+
 # While it is inconvenient to require playbook users to remember to set
 # this hard-coded value correctly, there is no reasonable way I could
 # devise to parameterize this given that the profiles are host agnostic
@@ -13,3 +19,5 @@ kernel:
 fio:
   bs: 8k
   iodepth: 8
+  rw: write
+  runtime: 10
