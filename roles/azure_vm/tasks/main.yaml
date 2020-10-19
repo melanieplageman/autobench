@@ -24,8 +24,6 @@
   azure_rm_securitygroup:
     resource_group: "{{ resource_group.state.name }}"
     name: nsg-sshallow-001
-    purge_default_rules: yes
-    purge_rules: yes
   register: security_group
 
 - name: Create a Virtual Network
@@ -36,21 +34,55 @@
     - "10.0.0.0/16"
   register: virtual_network
 
-- name: Create a Subnet in the Virtual Network
+# Note that this subnet is not created with the network security group
+# specified. This is because of a comment in the documentation
+# https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-about-vpn-gateway-settings
+# "When working with gateway subnets, avoid associating a network
+# security group (NSG) to the gateway subnet. Associating a network
+# security group to this subnet may cause your Virtual Network
+# gateway(VPN, Express Route gateway) to stop functioning as expected"
+- name: Create a Gateway Subnet in the Virtual Network
   azure_rm_subnet:
-    name: "snet-incubator-{{ location }}-001"
+    name: GatewaySubnet
+    resource_group: "{{ resource_group.state.name }}"
+    virtual_network: "{{ virtual_network.state.name }}"
+    address_prefix_cidr: "10.200.0.0/27"
+  register: subnet
+
+# Virtual Network Gateways can not be associated with a static IP address
+- name: Create a Public IP Address for the Gateway
+  azure_rm_publicipaddress:
+    name: "pip-vmiobench-{{ location }}-001"
+    resource_group: "{{ resource_group.state.name }}"
+    allocation_method: dynamic
+  register: public_ip_address
+
+- name: Create a Virtual Network Gateway
+  azure_rm_virtualnetworkgateway:
+    resource_group: "{{ resource_group.state.name }}"
+    name: "vngw-{{ resource_group.state.name}}"
+    virtual_network: "{{ virtual_network.state.name }}"
+    ip_configurations:
+      - name: "vng-{{ resource_group.state.name }}-ipconfig-001"
+        public_ip_address_name: "{{ public_ip_address.state.name }}"
+        subnet: GatewaySubnet
+  register: virtual_network_gateway
+
+- name: Create a Subnet in the Virtual Network for the VM
+  azure_rm_subnet:
+    name: "snet-{{ resource_group.state.name }}-{{ location }}-001"
     resource_group: "{{ resource_group.state.name }}"
     virtual_network: "{{ virtual_network.state.name }}"
     address_prefix_cidr: "10.0.0.0/24"
     security_group: "{{ security_group.state.name }}"
-  register: subnet
+  register: vm_subnet
 
-- name: Create a Public IP Address
+- name: Create a Public IP Address for the VM
   azure_rm_publicipaddress:
-    name: "pip-vmiobench-{{ location }}-001"
+    name: "pip-vmiobench-{{ location }}-002"
     resource_group: "{{ resource_group.state.name }}"
     allocation_method: static
-  register: public_ip_address
+  register: public_ip_address_2
 
 - name: Create a Network Interface
   azure_rm_networkinterface:
@@ -58,10 +90,10 @@
     resource_group: "{{ resource_group.state.name }}"
     virtual_network: "{{ virtual_network.state.name }}"
     security_group: "{{ security_group.state.name }}"
-    subnet_name: "{{ subnet.state.name }}"
+    subnet_name: "{{ vm_subnet.state.name }}"
     ip_configurations:
     - name: "vmiobench-ipconfig-001"
-      public_ip_address_name: "{{ public_ip_address.state.name }}"
+      public_ip_address_name: "{{ public_ip_address_2.state.name }}"
       primary: True
   register: network_interface
 
@@ -82,7 +114,7 @@
     resource_group: "{{ resource_group.state.name }}"
     vm_size: "{{ instance_size }}"
     virtual_network: "{{ virtual_network.state.name }}"
-    subnet: "{{ subnet.state.name }}"
+    subnet: "{{ vm_subnet.state.name }}"
     network_interfaces: "{{ network_interface.state.name }}"
     # not supported for Premium_LRS
     # boot_diagnostics:
@@ -124,8 +156,12 @@
     # state, storage_account_type, subscription_id, tags, tenant, zone
     #managed-by: vmiobench-001
 
-- name: VM's public IP address
-  debug: var=public_ip_address.state.ip_address
+- name: Set host fact Private IP Address
+  set_fact:
+    private_ip_address: "{{ vm['ansible_facts']['azure_vm']['properties']['networkProfile']['networkInterfaces'][0]['properties']['ipConfigurations'][0]['properties']['privateIPAddress'] }}"
+
+- name: VM's private IP address
+  debug: var=private_ip_address
 
 - name: Update Ansible's inventory file
   template:
