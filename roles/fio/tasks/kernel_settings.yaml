@@ -10,6 +10,10 @@
 - name: Set host fact for the device name
   set_fact: device="{{ device.stat.lnk_source | basename }}"
 
+# TODO: should this be before or after setting the IO Scheduler?
+- name: Change the number of requests to the specified number
+  become: yes
+  shell: echo "{{ profile.kernel.nr_requests | quote }}" > "{{ '/sys/block/' + device + '/queue/nr_requests' }}"
 
 - name: Change the IO scheduler to use specified scheduler
   become: yes

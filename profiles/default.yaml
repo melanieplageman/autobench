@@ -8,6 +8,7 @@ kernel:
   max_sectors_kb: 128
   read_ahead_kb: 4096
   queue_depth: 64
+  nr_requests: 128
 
 fio:
   bs: 8k
