@@ -1,3 +1,6 @@
+/host_vars/*
+/results/**
+
 # Ansible
 
 *.retry

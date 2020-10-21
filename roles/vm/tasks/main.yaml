@@ -1,17 +1,3 @@
-# names chosen according to recommendations in
-# https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/naming-and-tagging
-# with consideration of naming scope
-
-# TODO: update the resource names to make them easier to search?
-
-- name: Load profile
-  include_vars:
-    file: "{{ (playbook_dir, 'profiles', profile_name + '.yaml') | path_join }}"
-    name: profile
-
-- debug:
-    var: profile
-
 - name: Generate OpenSSH public key
   openssh_keypair:
     path: "{{ privatekey | default(playbook_dir + '/id') }}"
@@ -21,22 +7,27 @@
 
 - name: Create a Resource Group
   azure_rm_resourcegroup:
-    name: "{{ resource_group_name }}"
-    location: "{{ location }}"
+    name: "{{ vm_resource_group_name }}"
+    location: "{{ vm_location }}"
   register: resource_group
 
+# Must either specify a rule here to allow ssh from your IP address or
+# configure a VPN.
+# Azure Point-To-Site VPN docs here:
+# https://docs.microsoft.com/en-us/azure/vpn-gateway/point-to-site-about
 - name: Create a Network Security Group
   azure_rm_securitygroup:
     resource_group: "{{ resource_group.state.name }}"
-    name: nsg-sshallow-001
+    name: nsg
   register: security_group
 
 - name: Create a Virtual Network
   azure_rm_virtualnetwork:
-    name: "vnet-incubator-{{ location }}-001"
+    name: vnet
     resource_group: "{{ resource_group.state.name }}"
     address_prefixes_cidr:
     - "10.0.0.0/16"
+    - "10.200.0.0/27"
   register: virtual_network
 
 # Note that this subnet is not created with the network security group
@@ -52,30 +43,33 @@
     resource_group: "{{ resource_group.state.name }}"
     virtual_network: "{{ virtual_network.state.name }}"
     address_prefix_cidr: "10.200.0.0/27"
-  register: subnet
 
 # Virtual Network Gateways can not be associated with a static IP address
 - name: Create a Public IP Address for the Gateway
   azure_rm_publicipaddress:
-    name: "pip-vmiobench-{{ location }}-001"
+    name: pip-gateway
     resource_group: "{{ resource_group.state.name }}"
     allocation_method: dynamic
-  register: public_ip_address
+  register: gateway_public_ip_address
 
+# Note that you will need to do manual setup for such a VPN
+# Point-to-site configuration on the gateway
+# Certificate authentication setup
+# and Client setup (with the certificate)
 - name: Create a Virtual Network Gateway
   azure_rm_virtualnetworkgateway:
     resource_group: "{{ resource_group.state.name }}"
-    name: "vngw-{{ resource_group.state.name}}"
+    name: vngw
     virtual_network: "{{ virtual_network.state.name }}"
     ip_configurations:
-      - name: "vng-{{ resource_group.state.name }}-ipconfig-001"
-        public_ip_address_name: "{{ public_ip_address.state.name }}"
-        subnet: GatewaySubnet
+    - name: vng-ipconfig-001
+      public_ip_address_name: "{{ gateway_public_ip_address.state.name }}"
+      subnet: GatewaySubnet
   register: virtual_network_gateway
 
 - name: Create a Subnet in the Virtual Network for the VM
   azure_rm_subnet:
-    name: "snet-{{ resource_group.state.name }}-{{ location }}-001"
+    name: "vm-snet-1"
     resource_group: "{{ resource_group.state.name }}"
     virtual_network: "{{ virtual_network.state.name }}"
     address_prefix_cidr: "10.0.0.0/24"
@@ -84,27 +78,27 @@
 
 - name: Create a Public IP Address for the VM
   azure_rm_publicipaddress:
-    name: "pip-vmiobench-{{ location }}-002"
+    name: "pip-vm-{{ vm_suffix }}-001"
     resource_group: "{{ resource_group.state.name }}"
     allocation_method: static
-  register: public_ip_address_2
+  register: vm_public_ip_address
 
 - name: Create a Network Interface
   azure_rm_networkinterface:
-    name: "nic-01-vmiobench-incubator-001"
+    name: "nic-{{ vm_suffix }}-001"
     resource_group: "{{ resource_group.state.name }}"
     virtual_network: "{{ virtual_network.state.name }}"
     security_group: "{{ security_group.state.name }}"
     subnet_name: "{{ vm_subnet.state.name }}"
     ip_configurations:
-    - name: "vmiobench-ipconfig-001"
-      public_ip_address_name: "{{ public_ip_address_2.state.name }}"
+    - name: "nic-ipconfig-{{ vm_suffix }}-001"
+      public_ip_address_name: "{{ vm_public_ip_address.state.name }}"
       primary: True
-  register: network_interface
+  register: vm_network_interface
 
 - name: Create a Storage Account
   azure_rm_storageaccount:
-    name: "stvmiobench{{ location }}001"
+    name: "storacct{{ resource_group.state.name }}{{ vm_suffix }}"
     resource_group: "{{ resource_group.state.name }}"
     account_type: Premium_LRS
     force_delete_nonempty: yes
@@ -115,12 +109,12 @@
   azure_rm_virtualmachine:
     admin_username: "{{ ansible_user_id }}"
     ssh_password_enabled: false
-    name: vmiobench-001
+    name: "vm-{{ vm_suffix }}"
     resource_group: "{{ resource_group.state.name }}"
-    vm_size: "{{ instance_size }}"
+    vm_size: "{{ vm_instance_type }}"
     virtual_network: "{{ virtual_network.state.name }}"
     subnet: "{{ vm_subnet.state.name }}"
-    network_interfaces: "{{ network_interface.state.name }}"
+    network_interfaces: "{{ vm_network_interface.state.name }}"
     # not supported for Premium_LRS
     # boot_diagnostics:
     #   enabled: yes
@@ -136,6 +130,25 @@
       key_data: "{{ keypair.public_key }}"
   register: vm
 
+# Docs are incorrect. You must access the properties as vm['ansible_facts']
+# not vm['azure_vm']
+- name: Set host fact Private IP Address
+  set_fact:
+    private_ip_address: "{{ vm['ansible_facts']['azure_vm']['properties']['networkProfile']['networkInterfaces'][0]['properties']['ipConfigurations'][0]['properties']['privateIPAddress'] }}"
+
+- name: Set host fact VM name
+  set_fact:
+    vm_name: "{{ vm['ansible_facts']['azure_vm']['name'] }}"
+
+- name: VM's name
+  debug: var=vm_name
+
+- name: VM's suffix
+  debug: var=vm_suffix
+
+- name: VM's private IP address
+  debug: var=private_ip_address
+
 # not able to attach storage to VM currently due to bug
 # https://github.com/ansible-collections/azure/issues/146
 # after bug is resolved, will be able to set managed_disk_id in VM
@@ -143,50 +156,49 @@
 # until then, need to manually attach the disk
 - name: Create a Data Disk
   azure_rm_manageddisk:
-    name: dd-001
+    name: "dd-{{ vm_suffix }}"
     resource_group: "{{ resource_group.state.name }}"
     create_option: empty
     storage_account_type: Premium_LRS
     os_type: linux
-    # TODO: consider parameterizing
     attach_caching: ''
-    disk_size_gb: "{{ disk_size }}"
-    # managed-by doesn't work. error says:
-    # Unsupported parameters for (azure_rm_manageddisk) module:
-    # managed-by Supported parameters include: ad_user,
-    # adfs_authority_url, api_profile, append_tags, attach_caching,
-    # auth_source, cert_validation_mode, client_id, cloud_environment,
-    # create_option, disk_size_gb, location, lun, managed_by, name,
-    # os_type, password, profile, resource_group, secret, source_uri,
-    # state, storage_account_type, subscription_id, tags, tenant, zone
-    #managed-by: vmiobench-001
+    disk_size_gb: "{{ vm_disk_size_gb }}"
+  register: dd
 
-- name: Set host fact Private IP Address
-  set_fact:
-    private_ip_address: "{{ vm['ansible_facts']['azure_vm']['properties']['networkProfile']['networkInterfaces'][0]['properties']['ipConfigurations'][0]['properties']['privateIPAddress'] }}"
-
-- name: VM's private IP address
-  debug: var=private_ip_address
-
-- name: Update Ansible's inventory file
-  template:
-    dest: "{{ playbook_dir }}/hosts"
-    src: hosts.j2
+- name: print data disk info
+  debug:
+    var: dd
 
 # Followed these instructions https://docs.microsoft.com/en-us/azure/virtual-machines/linux/add-disk
-# Note that because this is done directly through the Azure CLI, we do not have the idempotency that Ansible usually provides.
-# If the disk is already attached, this will error out
-# This is unfortunate but unavoidable due to the bug
-# If you have to run this playbook when you have already attached a disk at lun 1, run the playbook with --skip_tags="disk-attach" (or detach the disk)
+# Note that because this is done directly through the Azure CLI, we do not have
+# the idempotency that Ansible usually provides.
+# If the disk is already attached, this will error out.
+# This is unfortunate but unavoidable due to the bug.
+# It will error out if the disk is already attached, however, it will not cause
+# playbook execution to fail (because of the `failed_when` condition) If you
+# have to run this playbook when you have already attached a disk at lun 1, run
+# the playbook with --skip_tags="disk-attach" (or detach the disk)
 - name: Attach the Data Disk to the VM
   command: >
     az vm disk attach
-    -g "{{ resource_group_name | quote }}"
-    --vm-name vmiobench-001
-    --name dd-001
+    -g "{{ vm_resource_group_name | quote }}"
+    --vm-name "vm-{{ vm_suffix | quote }}"
+    --name "dd-{{ vm_suffix | quote }}"
     --lun 1
+  failed_when: "False"
   tags: disk-attach
 
 - name: Print Azure VM disk device
   debug:
     msg: "Azure VM disk attached. Use '/dev/disk/azure/scsi1/lun1' for device name in future tasks requiring device name"
+
+- name: Create a host vars directory
+  file:
+    path: "{{ playbook_dir }}/host_vars"
+    state: directory
+
+- name: Drop a host vars file
+  tags: test
+  template:
+    src: info.j2
+    dest: "{{ playbook_dir }}/host_vars/{{ vm_ansible_name }}"

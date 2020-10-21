@@ -39,20 +39,17 @@ ansible-playbook site.yaml -e "privatekey=PRIVATE_KEY_FILE"
 The instance size, location, subscription, and resource group name are all parameterizable.
 Edit the `roles/azure_vm/defaults/main.yaml` file. You can also override the defaults without editing the file when running the playbook. See the [ansible docs](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#defining-variables-at-runtime) for more info.
 
-Once you have run the `site.yaml` playbook once, if you make a change, other than deleting the VM or detaching the data disk, and would like to run it again, you will need to skip the disk-attach tag to avoid erroring out. This is due to a bug in the Ansible Azure module. The role that provisions the Azure VM will attempt to attach the data disk again and will error out. Run it like this any time you want to run it when the disk is already attached.
-
-```sh
-ansible-playbook site.yaml -e "privatekey=PRIVATE_KEY_FILE" --skip-tags "disk-attach"
-```
+If this is the first time you are running site.yaml, you may want to comment out the `Remote setup` tasks. You should first provision the machines and then add them to the ansible inventory. By default the group of hosts on which the remote setup tasks will execute is called `azure_vms`. Change this to the name of the host or hosts on which you plan to run later plays.
 
 ## Running an fio job
 
-To run fio with certain kernel settings, make a profile in `profiles` (see `profiles/default.yaml` for an example) and run it, overriding the `profile_name` default:
+To run one or more fio jobs, either define your fio job details in `fio.yaml`, define the var `fio_job_file`, or delete this var and edit the fio job file template `roles/fio/templates/profile.fio.j2`.
+To change the kernel parameters' values, edit them in `fio.yaml`. To change which kernel parameters are under test, you will also need to add code to set the new parameter in the `disk_kernel` role and add this setting to what is appended to the index file in the `fio` role.
+To run the fio jobs, run the top level `fio.yaml` file.
+
 ```sh
-ansible-playbook fio.yaml -e "privatekey=PRIVATE_KEY_FILE" -e "profile_name=PROFILE_NAME"
+ansible-playbook fio.yaml -e "privatekey=PRIVATE_KEY_FILE"
 ```
-To view a graph of completion latencies for all fio jobs run this way, run `jupyter notebook` in `results/fio` and check out `clat.ipynb`.
-You'll need to replace the `json_source_dir` to point to your own.
 
 ## Running TPC-DS
 To run the TPC-DS benchmark on a certain revision of Postgres:
@@ -111,9 +108,6 @@ If you have run TPC-DS on this host before and would like to only run the querie
 ```sh
 ansible-playbook tpcds.yaml -e "privatekey=PRIVATE_KEY" -l azure_vm --tags "run"
 ```
-
-To view a chart of all TPC-DS queries run and their completion times, run `jupyter notebook` in the `results` directory and check out `tpcds_throughput.ipynb`. You'll need to change the `result_dir` (at the top of the notebook) to point to your own.
-
 
 Ansible project directory layout hints
 --------------------------------------
@@ -174,4 +168,3 @@ This directory houses most of the tasks for all of the plays in this project.
 
 # TODO
 - Add a pgbench role which depends on Postgres
-- Add [git filters](https://pascalbugnion.net/blog/ipython-notebooks-and-git.html) for iPython notebooks

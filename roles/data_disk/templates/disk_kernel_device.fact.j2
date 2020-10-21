@@ -1,0 +1,4 @@
+#! /bin/bash
+
+link_target="$(readlink -fn {{ vm_data_disk_specs['device'] | quote }})"
+echo "\"$(basename "$link_target")\""

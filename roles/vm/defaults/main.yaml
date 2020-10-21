@@ -1,0 +1,9 @@
+vm_location: westus2
+vm_resource_group_name: "{{ ansible_user_id }}"
+vm_instance_type: Standard_F16s_v2
+vm_disk_size_gb: 8192
+vm_suffix: 001
+
+# The future name of the VM. This *must* be the same name that this VM will be
+# assigned in Ansible's inventory.
+vm_ansible_name: vm

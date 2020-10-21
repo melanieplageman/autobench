@@ -1,0 +1,21 @@
+"vm_instance_info": {
+  "specs": {
+    "instance_type": {{ vm_instance_type | to_json }},
+    "max_iops": {{ lookup('ini', 'max_iops section=' + vm_instance_type|quote + ' file=instance_specs.ini' ) }},
+    "max_tput_MBps": {{ lookup('ini', 'max_tput_MBps section=' + vm_instance_type|quote + ' file=instance_specs.ini' )}},
+  },
+  "default_kernel_device_parameters": {
+    "default_max_sectors_kb": {{ lookup('ini', 'default_max_sectors_kb section=' + vm_instance_type|quote + ' file=instance_specs.ini' )}},
+    "default_nr_requests": {{ lookup('ini', 'default_nr_requests section=' + vm_instance_type|quote + ' file=instance_specs.ini' )}},
+    "default_read_ahead_kb": {{ lookup('ini', 'default_read_ahead_kb section=' + vm_instance_type|quote + ' file=instance_specs.ini' )}},
+    "default_queue_depth": {{ lookup('ini', 'default_queue_depth section=' + vm_instance_type|quote + ' file=instance_specs.ini' )}},
+    "default_scheduler": {{ lookup('ini', 'default_scheduler section=' + vm_instance_type|quote + ' file=instance_specs.ini' )}},
+    "default_wbt_lat_usec": {{ lookup('ini', 'default_wbt_lat_usec section=' + vm_instance_type|quote + ' file=instance_specs.ini' )}}
+  }
+}
+"vm_data_disk_specs": {
+  "size_gb": {{ vm_disk_size_gb | to_json }},
+  "device": "/dev/disk/azure/scsi1/lun1",
+  "provisioned_iops": {{ lookup('ini', 'provisioned_iops section=' + vm_disk_size_gb|quote + ' file=disk_specs.ini' )}},
+  "provisioned_tput_MBps": {{ lookup('ini', 'provisioned_tput_MBps section=' + vm_disk_size_gb|quote + ' file=disk_specs.ini' )}}
+}

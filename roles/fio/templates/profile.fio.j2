@@ -1,14 +1,17 @@
 [global]
 time_based=1
-ioengine=libaio
-direct=1
-directory=/datadrive
 
 [job1]
-name=small_blocks_write
-filesize=4G
-filename=small_blocks_write_data
-bs={{ profile.fio.bs | default('8k')}}
-runtime={{ profile.fio.runtime }}
-rw={{ profile.fio.rw }}
-iodepth={{ profile.fio.iodepth | default('8')}}
+name=none
+filesize={{ j1_fio_filesize }}
+bs={{ j1_fio_bs }}
+runtime={{ j1_fio_runtime }}
+rw={{ j1_fio_rw }}
+iodepth={{ j1_fio_iodepth }}
+ioengine={{ j1_fio_ioengine }}
+direct={{ j1_fio_direct }}
+buffered={{ j1_fio_buffered }}
+nrfiles={{ j1_fio_nrfiles }}
+file_service_type={{ j1_fio_file_service_type }}
+fdatasync={{ j1_fio_fdatasync }}
+numjobs={{ j1_fio_numjobs }}

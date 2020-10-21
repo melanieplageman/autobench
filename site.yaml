@@ -1,13 +1,77 @@
 - name: Create the VM in Azure
   hosts: localhost
-  roles: [azure_vm]
   tasks:
+  - vars:
+      vm_ansible_name: vm001
+      vm_suffix: 001
+      vm_disk_size_gb: 64
+    import_role:
+      name: vm
+  - vars:
+      vm_ansible_name: vm002
+      vm_suffix: 002
+      vm_disk_size_gb: 128
+    import_role:
+      name: vm
+  - vars:
+      vm_ansible_name: vm003
+      vm_suffix: 003
+      vm_disk_size_gb: 256
+    import_role:
+      name: vm
+  - vars:
+      vm_ansible_name: vm004
+      vm_suffix: 004
+      vm_disk_size_gb: 512
+    import_role:
+      name: vm
+  - vars:
+      vm_ansible_name: vm005
+      vm_suffix: 005
+      vm_disk_size_gb: 1024
+    import_role:
+      name: vm
+  - vars:
+      vm_ansible_name: vm006
+      vm_suffix: 006
+      vm_disk_size_gb: 2048
+    import_role:
+      name: vm
+  - vars:
+      vm_ansible_name: vm007
+      vm_suffix: 007
+      vm_disk_size_gb: 8192
+    import_role:
+      name: vm
+  - vars:
+      vm_ansible_name: vm008
+      vm_suffix: 008
+      vm_disk_size_gb: 16384
+    import_role:
+      name: vm
+  - vars:
+      vm_ansible_name: vm009
+      vm_suffix: 009
+      vm_disk_size_gb: 32767
+    import_role:
+      name: vm
+  # This VM is annoyingly named vm-8 as the suffix was converted to 8
+  - vars:
+      vm_ansible_name: vm010
+      vm_suffix: 010
+      vm_disk_size_gb: 8192
+    import_role:
+      name: vm
   - name: Reload Ansible's inventory file
     meta: refresh_inventory
 
-- name: Do initial setup on the remote host
-  hosts: azure_vm
+- name: Remote Setup
+  hosts: azure_vms
   tasks:
-  - import_role:
-      name: azure_vm
-      tasks_from: remote
+  - name: Upgrade the Kernel Version
+    import_role:
+      name: kernel
+
+  - name: Mount and Format the disk
+    import_role:
+      name: data_disk

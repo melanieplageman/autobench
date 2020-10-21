@@ -1,0 +1,38 @@
+# TODO: Consider cat'ing out all of the kernel settings set and appending
+# this to the index file for the run instead of the desired settings.
+# Shouldn't be different since a failure to set will error out, but, should
+# there be an accidental change to the ordering of roles in the loop, it
+# will not be noticeable to the developer that the settings have not been
+# set before desired benchmark has been run
+- name: Either disable writeback throttling or set the target minimum read latency
+  become: yes
+  shell: >
+    echo "{{ disk_kernel_wbt_lat_usec | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/wbt_lat_usec"
+
+- name: Change the IO scheduler to use specified scheduler
+  become: yes
+  shell: >
+    echo "{{ disk_kernel_io_scheduler | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/scheduler"
+
+# IO scheduler on or off influences max value for nr_requests, so set it first
+- name: Change the number of requests to the specified number
+  become: yes
+  shell: >
+    echo "{{ disk_kernel_nr_requests | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/nr_requests"
+
+- name: Limit max IO size to specified size
+  become: yes
+  shell: >
+    echo "{{ disk_kernel_max_sectors_kb | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/max_sectors_kb"
+
+- name: Set the readahead window to the specified value
+  become: yes
+  shell: >
+    echo "{{ disk_kernel_read_ahead_kb | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/read_ahead_kb"
+
+- name: Change the block device queue depth to specified value
+  become: yes
+  shell: >
+    echo "{{ disk_kernel_queue_depth | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/device/queue_depth"
+
+# vim: set ft=yaml.ansible:
