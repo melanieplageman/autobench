@@ -45,5 +45,29 @@
     include_role:
       name: vm
       tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm007
+      vm_suffix: 007
+    include_role:
+      name: vm
+      tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm008
+      vm_suffix: 008
+    include_role:
+      name: vm
+      tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm009
+      vm_suffix: 009
+    include_role:
+      name: vm
+      tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm010
+      vm_suffix: 010
+    include_role:
+      name: vm
+      tasks_from: teardown
 
 # vim: set ft=yaml.ansible:
