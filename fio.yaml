@@ -1,3 +1,92 @@
 - name: Set up and run FIO jobs
-  hosts: azure_vm
-  roles: [fio]
+  hosts: azure_vms
+  vars:
+    fio_index_file: "{{ playbook_dir }}/results/fio/index-{{ inventory_hostname }}.json"
+
+    fio_job_file: |
+      [global]
+      time_based=1
+      ioengine=sync
+      buffered=1
+      direct=0
+      runtime=120
+      bs=8k
+
+      [job1]
+      name=checkpointer
+      filename={{ fio_write_job1_data_filename }}
+      iodepth=1
+      size=23G
+      rw=write
+      fsync_on_close=1
+      sync_file_range=write:32
+      numjobs=1
+
+      [job2]
+      name=wal
+      filename={{ fio_write_job2_data_filename }}
+      iodepth=1
+      size=4G
+      rw=write
+      fdatasync=1
+      numjobs=1
+
+      [job3]
+      name=large_read
+      iodepth=1
+      rw=read
+      filesize=5G
+      nrfiles=6
+      fdatasync=0
+      numjobs=1
+
+    fio_loop_agenda: |
+      {{ ([
+
+        { "disk_kernel_max_sectors_kb": 128 },
+        { "disk_kernel_max_sectors_kb": 512 },
+
+      ]) | product([
+
+        { "disk_kernel_read_ahead_kb": 4096 },
+        { "disk_kernel_read_ahead_kb": 8192 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_queue_depth": 64 },
+        { "disk_kernel_queue_depth": 8 },
+        { "disk_kernel_queue_depth": 128 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_wbt_lat_usec": 0 },
+        { "disk_kernel_wbt_lat_usec": 75000 },
+        { "disk_kernel_wbt_lat_usec": 1000000 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_nr_requests": 128 },
+        { "disk_kernel_nr_requests": 500 },
+        { "disk_kernel_nr_requests": 2000 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_io_scheduler": "mq-deadline" },
+
+      ]) | map("combine") }}
+
+  tasks:
+  - name: Create index file
+    copy:
+      content: "[]"
+      dest: "{{ fio_index_file }}"
+    delegate_to: localhost
+
+  - name: Run fio role for all combinations of settings
+    include_role:
+      name: loop_fio
+    loop: "{{ fio_loop_agenda }}"
+    loop_control:
+      extended: yes
+
+# vim: set ft=yaml.ansible:

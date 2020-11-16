@@ -1,0 +1,17 @@
+- name: Detach the Data Disk from the VM
+  command: >
+    az vm disk detach 
+    -g "{{ vm_resource_group_name | quote }}"
+    --vm-name "vm-{{ vm_suffix | quote }}"
+    -n "dd-{{ vm_suffix | quote }}"
+  failed_when: "False"
+  tags: disk
+
+- name: Delete a Data Disk
+  azure_rm_manageddisk:
+    name: "dd-{{ vm_suffix }}"
+    resource_group: "{{ vm_resource_group_name }}"
+    state: absent
+  tags: disk
+
+# vim: set ft=yaml.ansible:

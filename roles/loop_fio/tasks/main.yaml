@@ -1,0 +1,50 @@
+- debug:
+    var: item
+
+- set_fact:
+    disk_kernel_max_sectors_kb: "{{ item.disk_kernel_max_sectors_kb }}"
+  when: item.disk_kernel_max_sectors_kb is defined
+
+- set_fact:
+    disk_kernel_read_ahead_kb: "{{ item.disk_kernel_read_ahead_kb }}"
+  when: item.disk_kernel_read_ahead_kb is defined
+
+- set_fact:
+    disk_kernel_queue_depth: "{{ item.disk_kernel_queue_depth }}"
+  when: item.disk_kernel_queue_depth is defined
+
+- set_fact:
+    disk_kernel_nr_requests: "{{ item.disk_kernel_nr_requests }}"
+  when: item.disk_kernel_nr_requests is defined
+
+- set_fact:
+    disk_kernel_io_scheduler: "{{ item.disk_kernel_io_scheduler }}"
+  when: item.disk_kernel_io_scheduler
+
+- set_fact:
+    disk_kernel_wbt_lat_usec: "{{ item.disk_kernel_wbt_lat_usec }}"
+  when: item.disk_kernel_wbt_lat_usec is defined
+
+- name: Set kernel device parameters and run fio
+  block:
+    - name: Format and trim the disk
+      include_role:
+        name: data_disk
+        tasks_from: reset
+
+    - name: Set kernel device parameters
+      include_role:
+        name: disk_kernel
+
+    - name: Run fio jobs
+      vars:
+        fio_result_file: "{{ inventory_hostname }}-{{ ansible_loop.index }}.json"
+      include_role:
+        name: fio
+
+  rescue:
+    - name: Print when errors
+      debug:
+        msg: "Skipping this combination"
+
+# vim: set ft=yaml.ansible:

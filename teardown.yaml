@@ -1,0 +1,49 @@
+- name: Remote Disk Teardown
+  hosts: azure_vms
+  tasks:
+  - name: Unmount the Disk
+    import_role:
+      name: data_disk
+      tasks_from: teardown
+
+- name: Detach and Delete a Disk in Azure
+  hosts: localhost
+  tasks:
+  - vars:
+      vm_ansible_name: vm001
+      vm_suffix: 001
+    include_role:
+      name: vm
+      tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm002
+      vm_suffix: 002
+    include_role:
+      name: vm
+      tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm003
+      vm_suffix: 003
+    include_role:
+      name: vm
+      tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm004
+      vm_suffix: 004
+    include_role:
+      name: vm
+      tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm005
+      vm_suffix: 005
+    include_role:
+      name: vm
+      tasks_from: teardown
+  - vars:
+      vm_ansible_name: vm006
+      vm_suffix: 006
+    include_role:
+      name: vm
+      tasks_from: teardown
+
+# vim: set ft=yaml.ansible:

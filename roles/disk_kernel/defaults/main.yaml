@@ -1,0 +1,19 @@
+# Will set /...device.../queue/scheduler. Current default on Azure
+# VMs.
+disk_kernel_io_scheduler: none
+
+# Will set /...device.../queue/nr_requests
+disk_kernel_nr_requests: 128
+
+# Will set /...device.../queue/max_sectors_kb
+disk_kernel_max_sectors_kb: 512
+
+# Will set /...device.../queue/read_ahead_kb. Common starting value.
+disk_kernel_read_ahead_kb: 128
+
+# Will set /...device.../device/queue_depth (this is the LUN queue depth). Not
+# the default on Azure VMs but set low so other settings are more effective.
+disk_kernel_queue_depth: 64
+
+# Will set /...device.../queue/wbt_lat_usec to 0 (disabled)
+disk_kernel_wbt_lat_usec: 0

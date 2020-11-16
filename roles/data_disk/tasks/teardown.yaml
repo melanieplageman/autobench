@@ -1,0 +1,9 @@
+# Remove the device mount's entry from fstab, unmount the device, and
+# remove the mount point
+- name: Unmount the filesystem
+  become: yes
+  ansible.posix.mount:
+    path: "{{ data_disk_mount_dir }}"
+    state: absent
+
+# vim: set ft=yaml.ansible:

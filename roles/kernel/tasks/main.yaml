@@ -1,0 +1,13 @@
+- name: Install newer Linux kernel
+  become: yes
+  apt:
+    name: "{{ linux_kernel_version }}"
+  register: linux_kernel
+  when: ansible_facts['kernel'] is version('5', '<')
+
+- name: Reboot machine with newer kernel
+  become: yes
+  reboot:
+  when: linux_kernel is changed
+
+# vim: set ft=yaml.ansible:

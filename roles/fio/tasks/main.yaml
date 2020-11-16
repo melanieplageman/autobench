@@ -2,58 +2,75 @@
   become: yes
   apt: name=fio
 
-- name: Load profile
-  include_vars:
-    file: "{{ (playbook_dir, 'profiles', profile_name + '.yaml') | path_join }}"
-    name: profile
+- name: Install schedtool
+  become: yes
+  apt: name=schedtool
 
-- debug:
-    var: profile
-
-- import_tasks: kernel_settings.yaml
-
-- name: Create a jobs directory on the target host
-  file:
-    path: "{{ (ansible_user_dir, 'fio_jobs') | path_join }}"
-    state: directory
-    mode: '0755'
+- name: Copy fio job file to target host
+  copy:
+    content: "{{ fio_job_file }}"
+    dest: job.fio
+  when: fio_job_file is defined
 
 - name: Copy fio job file to target host 
   template:
     src: profile.fio.j2
-    dest: "{{ (ansible_user_dir, 'fio_jobs', profile_name + '.fio') | path_join }}"
+    dest: job.fio
+  when: fio_job_file is not defined
 
 - name: Create an fio output directory on the target host
   file:
-    path: "{{ (ansible_user_dir, 'fio_output') | path_join }}"
+    path: fio_output
     state: directory
-    mode: '0755'
 
 - name: Run fio jobs
   command: >
-    fio 
-      --filename=fio_data 
+    fio
+      --directory="{{ fio_target_directory | quote }}"
       --output-format=json+ 
-      --output="{{ (ansible_user_dir, 'fio_output', profile_name + '.json') | path_join }}"
-    "{{ (ansible_user_dir, 'fio_jobs', profile_name + '.fio') | path_join }}"
+      --output="{{ ansible_user_dir }}/fio_output/{{ fio_result_file }}"
+    "{{ ansible_user_dir }}/job.fio"
   args:
-    chdir: "{{ run_dir }}"
+    chdir: "{{ fio_target_directory }}"
+
+- name: Delete output of fio write job 1
+  file:
+    path: "{{ fio_target_directory }}/{{ fio_write_job1_data_filename }}"
+    state: absent
+  when: fio_write_job1_data_filename is defined
+
+- name: Delete output of fio write job 2
+  file:
+    path: "{{ fio_target_directory }}/{{ fio_write_job2_data_filename }}"
+    state: absent
+  when: fio_write_job2_data_filename is defined
 
 - name: Copy fio output file from host
   fetch:
-    src: "{{ (ansible_user_dir, 'fio_output', profile_name + '.json') | path_join }}"
+    src: "{{ ansible_user_dir }}/fio_output/{{ fio_result_file }}"
     dest: "{{ playbook_dir }}/results/fio/"
     flat: yes
 
-- name: Delete fio data from target
-  file:
-    path: "{{ (run_dir, 'fio_data') | path_join }}"
-    state: absent
-
-- name: Template Workload Settings and IUT Parameters to Results Dir
-  template:
-    src: result.fio.j2
-    dest: "{{ playbook_dir }}/results/fio/{{ profile_name + '_settings.csv' }}"
+- name: Append settings to index file
+  vars:
+    index: "{{ lookup('file', fio_index_file) | from_json }}"
+    run_info:
+      settings:
+        schedtool: False
+        IUT: 
+          vm: "{{ hostvars[inventory_hostname]['vm_instance_info'] }}"
+          disk: "{{ hostvars[inventory_hostname]['vm_data_disk_specs'] }}"
+        kernel: 
+          nr_requests: "{{ disk_kernel_nr_requests }}"
+          max_sectors_kb: "{{ disk_kernel_max_sectors_kb }}"
+          read_ahead_kb: "{{ disk_kernel_read_ahead_kb }}"
+          queue_depth: "{{ disk_kernel_queue_depth }}"
+          io_scheduler: "{{ disk_kernel_io_scheduler }}"
+          wbt_lat_usec: "{{ disk_kernel_wbt_lat_usec }}"
+      result_file: "{{ fio_result_file }}"
+  copy:
+    content: "{{ (index + [run_info]) | to_json }}"
+    dest: "{{ fio_index_file }}"
   delegate_to: localhost
 
 

@@ -1,3 +1,15 @@
 # TODO: look this up based on device provided by user in Ansible facts or pass it as a flag
-run_dir: /datadrive
-profile_name: default
+# unfortunately can't use target_directory from azure_vm because it has to be host-agnostic
+fio_target_directory: /mnt/data
+
+# This is the result of an fio run. The actual file itself will be written to
+# {{ ansible_user_dir }}/fio_output/{{ result_file }} on the target host
+# and will be transferred to localhost at
+# {{ playbook_dir }}/results/fio/{{ result_file }}
+fio_result_file: fio_result.json
+
+fio_index_file: "{{ playbook_dir }}/results/fio/index-{{ inventory_hostname }}.json"
+
+fio_write_job1_data_filename: write_job1_data
+
+fio_write_job2_data_filename: write_job2_data

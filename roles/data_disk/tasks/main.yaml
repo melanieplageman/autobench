@@ -1,0 +1,79 @@
+- name: Create /etc/ansible/facts.d
+  become: yes
+  file: name=/etc/ansible/facts.d state=directory
+
+- name: Copy over custom fact on device to help disk_kernel role
+  become: yes
+  template:
+    dest: /etc/ansible/facts.d/disk_kernel_device.fact
+    src: disk_kernel_device.fact.j2
+    mode: "0755"
+  register: disk_kernel_device_fact_file
+
+- setup:
+  when: disk_kernel_device_fact_file.changed
+
+# TODO: would prefer to use the device itself and not a partition,
+# but couldn't get it to mount successfully with just the device
+- name: Install parted and fdisk
+  become: yes
+  apt:
+    pkg:
+      - parted
+      - fdisk
+
+- name: Partition and format the disk
+  become: yes
+  parted:
+    device: "{{ vm_data_disk_specs['device']|quote }}"
+    label: gpt
+    fs_type: ext4
+    name: data
+    state: present
+    number: 1
+  register: formatted_disk
+
+- name: Unmount the filesystem in case it is mounted already
+  become: yes
+  ansible.posix.mount:
+    path: "{{ data_disk_mount_dir }}"
+    state: absent
+
+# TODO: consider using a label here to allow using this label to refer to the
+# disk by label in subsequent tasks
+- name: Format the disk and build the filesystem
+  become: yes
+  filesystem:
+    fstype: ext4
+    dev: "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+    force: yes
+
+- name: Copy over custom fact on partition to help disk_kernel role
+  become: yes
+  template:
+    dest: /etc/ansible/facts.d/disk_kernel_device_partition.fact
+    src: disk_kernel_device_partition.fact.j2
+    mode: "0755"
+  register: disk_kernel_device_partition_fact_file
+
+- name: Make a directory for the filesystem
+  become: yes
+  file: path="{{ data_disk_mount_dir }}" state=directory
+
+- name: Mount the filesystem
+  become: yes
+  ansible.posix.mount:
+    path: "{{ data_disk_mount_dir }}"
+    src: "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+    fstype: ext4
+    state: mounted
+
+- name: Change permissions and ownership of mounted disk
+  become: yes
+  file:
+    path: "{{ data_disk_mount_dir }}"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}" 
+    mode: '0755'
+
+# vim: set ft=yaml.ansible:

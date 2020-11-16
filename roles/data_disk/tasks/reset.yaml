@@ -1,0 +1,6 @@
+- name: Trim the filesystem
+  become: yes
+  command: >
+    fstrim -v "{{ data_disk_mount_dir }}"
+
+# vim: set ft=yaml.ansible:
