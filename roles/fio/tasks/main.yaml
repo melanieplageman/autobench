@@ -48,7 +48,7 @@
 - name: Copy fio output file from host
   fetch:
     src: "{{ ansible_user_dir }}/fio_output/{{ fio_result_file }}"
-    dest: "{{ playbook_dir }}/results/fio/"
+    dest: "{{ fio_results_directory }}"
     flat: yes
 
 - name: Append settings to index file

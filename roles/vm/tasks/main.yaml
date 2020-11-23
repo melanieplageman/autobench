@@ -114,6 +114,8 @@
     vm_size: "{{ vm_instance_type }}"
     virtual_network: "{{ virtual_network.state.name }}"
     subnet: "{{ vm_subnet.state.name }}"
+    tags:
+      Size: "{{ vm_instance_type }}"
     network_interfaces: "{{ vm_network_interface.state.name }}"
     # not supported for Premium_LRS
     # boot_diagnostics:
