@@ -165,6 +165,8 @@
     os_type: linux
     attach_caching: ''
     disk_size_gb: "{{ vm_disk_size_gb }}"
+    tags:
+      Size: "{{ vm_disk_size_gb }}"
   register: dd
 
 - name: print data disk info
