@@ -2,12 +2,11 @@ autobench
 =========
 
 # About
-autobench is a tool to configure and run various benchmarks on cloud VMs or local machines and graph the output in a meaningful way.
+autobench is a tool to configure and run various benchmarks on cloud VMs or local machines.
 
 autobench supports provisioning Azure VMs.
 
 autobench supports running [fio](https://fio.readthedocs.io/en/latest/fio_doc.html) jobs. Specifically, autobench allows you to create a profile of specific kernel settings and fio job parameters and will configure the VM with those settings and generate an fio job file with those parameters.
-
 autobench supports building Postgres from source from a specific revision.
 
 autobench supports running the [TPC-DS](https://www.tpc.org/tpcds/default5.asp) benchmark either on an Azure VM or on a user-managed machine (not provisioned by autobench).
@@ -37,7 +36,7 @@ ansible-playbook site.yaml -e "privatekey=PRIVATE_KEY_FILE"
 ```
 
 The instance size, location, subscription, and resource group name are all parameterizable.
-Edit the `roles/azure_vm/defaults/main.yaml` file. You can also override the defaults without editing the file when running the playbook. See the [ansible docs](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#defining-variables-at-runtime) for more info.
+Edit the `roles/vm/defaults/main.yaml` file. You can also override the defaults without editing the file when running the playbook. See the [ansible docs](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#defining-variables-at-runtime) for more info.
 
 If this is the first time you are running site.yaml, you may want to comment out the `Remote setup` tasks. You should first provision the machines and then add them to the ansible inventory. By default the group of hosts on which the remote setup tasks will execute is called `azure_vms`. Change this to the name of the host or hosts on which you plan to run later plays.
 
@@ -118,45 +117,44 @@ ansible-playbook tpcds.yaml -e "privatekey=PRIVATE_KEY" -l azure_vm --tags "run"
 Ansible project directory layout hints
 --------------------------------------
 
-`hosts`: your inventory of hosts
+`hosts`: the user's inventory of hosts. This must be created and updated by the user after running `site.yaml`
 
-`site.yaml`: the main Ansible playbook in this project currently. It runs the
-Azure VM role tasks. First it provisions the Azure VM and associated resources, then it runs a set up tasks to do setup on the provisioned VM, including loading a newer Linux kernel and restarting the VM. Though you
-can run the Postgres and TPC-DS roles on other hosts, currently the playbook is
-geared toward an environment where you can provision a brand new VM for the
-explicit purpose of doing this work.
+`site.yaml`: the main Ansible playbook in this project currently. It runs the VM role tasks. First it provisions the VMs and associated resources, then it runs a set up tasks to do setup on the provisioned VM, including loading a newer Linux kernel and restarting the VM. Though you can run the Postgres and TPC-DS roles on other hosts, currently the playbook is geared toward an environment where you can provision a brand new VM for the explicit purpose of doing this work.
 
-`tpcds.yaml`, `fio.yaml`, `postgres.yaml`: These are the three playbooks that
-currently exist. `fio.yaml` will run the tasks in the `fio` role. Currently it
-is set to run only on an `azure_vm` host, however it is easy to change that.
-`postgres.yaml` will run the tasks in the `postgres` role as well as those in
-the `systemd-user` and `git` roles. `tpcds.yaml` will run the tasks in both the
-`postgres` role (and its dependencies) as well as the `tpcds` role.
-
-`profiles` directory:
-This directory contains profiles for use in the FIO role. Because the Azure VM I/O benchmarking we are doing examines combinations of kernel settings with different I/O workloads, profiles allow you to specify the relevant FIO job parameters as well as kernel settings which will be applied in the Azur VM. The template in `roles/fio/templates/profile.fio.j2` takes the parameters from the profile and generates an FIO job file which is copied to the target host.
+`tpcds.yaml`, `fio.yaml`, `postgres.yaml`: These are the three main playbooks that currently exist. `fio.yaml` will run the tasks in the `fio` role, as well as the dependent `disk_kernel` role which sets the kernel settings to those under test. Currently it is set to run only on an `azure_vm` host, however it is easy to change that. `postgres.yaml` will run the tasks in the `postgres` role as well as those in the `systemd-user` and `git` roles. `tpcds.yaml` will run the tasks in both the `postgres` role (and its dependencies) as well as the `tpcds` role.
 
 If we start working on various TPC-DS performance experiments, it could be advantageous to create a profile with both various Postgres and TPC-DS settings which will be consumed by the `tpcds` role as well as used to generate a modified `postgresql.conf` file using a template in the `postgres` role. These could go in a new directory in the `profiles` directory.
 
 `results` directory:
-This is the target for the formatted output which will be fetched from the target host and copied to the user's local machine. It is also home to the iPython notebooks which display charts of the various relevant metrics.
+This is the target for the formatted output which will be fetched from the target host and copied to the user's local machine. Results copied here are usually in JSON format. However, fio results metadata is stored in a database.
 
 `roles` directory:
 This directory houses most of the tasks for all of the plays in this project.
-- `azure_vm` role:
+- `vm` role:
   - `defaults` contain parameters that the user may want to set
   - `tasks`
-    - `main.yaml` provisions the Azure VM and associated resources as well as provisioning and attaching the data disk
-    - `remote.yaml` does required setup on the Azure VM once it is provisioned
-  - `templates` contains the template that is used to generate the `hosts` file that is the Ansible inventory. The Azure VM is added here
+    - `main.yaml` provisions the VM and associated resources as well as provisioning and attaching the data disk
+    - `teardown.yaml` unmounts, detaches, and deletes the disks associated with the VMs specified
+  - `templates`
+    - `info.j2` templates the `host_vars` used by tasks in other roles run on the VMs provisioned by this role
   - `vars` contains variables that should not be changed by the playbook user - in this case the name of the data disk device after provisioning the VM and data disk
+  - `files` contains the specs for the disks and VMs provisioned by this role. This metadata is not available through querying the provisioned VMs, so it must be hard-coded here for reference.
+- `kernel` role: This role installs a newer Linux kernel and reboots the target host.
+- `data_disk` role:
+  - `defaults` contain parameters that the user may want to set
+  - `tasks`
+    - `main.yaml` partitions, formats, and mounts a data disk on the target host
+    - `reset.yaml` trims the file system and is meant to be used between write-heavy benchmarking runs
+    - `teardown.yaml` unmounts the file system
+  - `templates` contain templates for host vars to be set on the target hosts
 - `fio` role:
   - `defaults` contain parameters that the user may want to set
-  - `tasks` contains two playbooks
-    - `kernel_settings.yaml` contains all of the tasks for changing kernel settings for the purposes of I/O benchmarking
-    - `main.yaml` contains all of the tasks for setting up and running an FIO job on the target host
-  - `templates` contains the template for generating the profile with the FIO job settings and kernel parameters specified in profile supplied by the user when running the fio playbook
+  - `tasks`
+    - `main.yaml` contains all of the tasks for setting up and running an fio job on the target host
+  - `templates` contains the template for generating the profile with the fio job settings and kernel parameters specified in profile supplied by the user when running the fio playbook
   - `files` contains scripts for setting up the fio results database
+- `loop_fio` role: This runs the fio role with every combination of kernel parameters from `fio.yaml`
+- `disk_kernel` role: This sets kernel parameters on the target host.
 - `git` role: This just installs git
 - `postgres` role:
   - `defaults` contain parameters that the user may want to set

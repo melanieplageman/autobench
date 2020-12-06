@@ -1,72 +1,520 @@
 - name: Create the VM in Azure
   hosts: localhost
   tasks:
+  # - vars:
+  #     vm_ansible_name: vm001
+  #     vm_suffix: 001
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm002
+  #     vm_suffix: 002
+  #     vm_disk_size_gb: 8
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm003
+  #     vm_suffix: 003
+  #     vm_disk_size_gb: 16
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm004
+  #     vm_suffix: 004
+  #     vm_disk_size_gb: 32
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm005
+  #     vm_suffix: 005
+  #     vm_disk_size_gb: 64
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm006
+  #     vm_suffix: 006
+  #     vm_disk_size_gb: 128
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm007
+  #     vm_suffix: 007
+  #     vm_disk_size_gb: 256
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm008
+  #     vm_suffix: 008
+  #     vm_disk_size_gb: 512
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm009
+  #     vm_suffix: 009
+  #     vm_disk_size_gb: 1024
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm010
+  #     vm_suffix: 010
+  #     vm_disk_size_gb: 2048
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm011
+  #     vm_suffix: 011
+  #     vm_disk_size_gb: 4096
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm012
+  #     vm_suffix: 012
+  #     vm_disk_size_gb: 8192
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm013
+  #     vm_suffix: 013
+  #     vm_disk_size_gb: 16384
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm014
+  #     vm_suffix: 014
+  #     vm_disk_size_gb: 32767
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm015
+  #     vm_suffix: 015
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm016
+  #     vm_suffix: 016
+  #     vm_disk_size_gb: 8
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm017
+  #     vm_suffix: 017
+  #     vm_disk_size_gb: 16
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm018
+  #     vm_suffix: 018
+  #     vm_disk_size_gb: 32
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm019
+  #     vm_suffix: 019
+  #     vm_disk_size_gb: 64
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm020
+  #     vm_suffix: 020
+  #     vm_disk_size_gb: 128
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm021
+  #     vm_suffix: 021
+  #     vm_disk_size_gb: 256
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm022
+  #     vm_suffix: 022
+  #     vm_disk_size_gb: 512
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm023
+  #     vm_suffix: 023
+  #     vm_disk_size_gb: 1024
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm024
+  #     vm_suffix: 024
+  #     vm_disk_size_gb: 2048
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm025
+  #     vm_suffix: 025
+  #     vm_disk_size_gb: 4096
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm026
+  #     vm_suffix: 026
+  #     vm_disk_size_gb: 8192
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm027
+  #     vm_suffix: 027
+  #     vm_disk_size_gb: 16384
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm028
+  #     vm_suffix: 028
+  #     vm_disk_size_gb: 32767
+  #     vm_instance_type: Standard_F8s_v2
+  #   import_role:
+  #     name: vm
+
+  # - vars:
+  #     vm_ansible_name: vm029
+  #     vm_suffix: 029
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm030
+  #     vm_suffix: 030
+  #     vm_disk_size_gb: 8
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm031
+  #     vm_suffix: 031
+  #     vm_disk_size_gb: 16
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm032
+  #     vm_suffix: 032
+  #     vm_disk_size_gb: 32
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm033
+  #     vm_suffix: 033
+  #     vm_disk_size_gb: 64
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm034
+  #     vm_suffix: 034
+  #     vm_disk_size_gb: 128
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm035
+  #     vm_suffix: 035
+  #     vm_disk_size_gb: 256
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm036
+  #     vm_suffix: 036
+  #     vm_disk_size_gb: 512
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm037
+  #     vm_suffix: 037
+  #     vm_disk_size_gb: 1024
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm038
+  #     vm_suffix: 038
+  #     vm_disk_size_gb: 2048
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm039
+  #     vm_suffix: 039
+  #     vm_disk_size_gb: 4096
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm040
+  #     vm_suffix: 040
+  #     vm_disk_size_gb: 8192
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm041
+  #     vm_suffix: 041
+  #     vm_disk_size_gb: 16384
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm042
+  #     vm_suffix: 042
+  #     vm_disk_size_gb: 32767
+  #     vm_instance_type: Standard_F64s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm043
+  #     vm_suffix: 043
+  #     vm_disk_size_gb: 16 
+  #     vm_instance_type: Standard_F4s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm044
+  #     vm_suffix: 044
+  #     vm_disk_size_gb: 4096 
+  #     vm_instance_type: Standard_F4s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm045
+  #     vm_suffix: 045
+  #     vm_disk_size_gb: 8192
+  #     vm_instance_type: Standard_F4s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm046
+  #     vm_suffix: 046
+  #     vm_disk_size_gb: 16384
+  #     vm_instance_type: Standard_F4s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm047
+  #     vm_suffix: 047
+  #     vm_disk_size_gb: 32767
+  #     vm_instance_type: Standard_F4s_v2
+  #   import_role:
+  #     name: vm
+
+  # - vars:
+  #     vm_ansible_name: vm048
+  #     vm_suffix: 048
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F16s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm049
+  #     vm_suffix: 049
+  #     vm_disk_size_gb: 8
+  #     vm_instance_type: Standard_F16s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm050
+  #     vm_suffix: 050
+  #     vm_disk_size_gb: 16
+  #     vm_instance_type: Standard_F16s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm051
+  #     vm_suffix: 051
+  #     vm_disk_size_gb: 32
+  #     vm_instance_type: Standard_F16s_v2
+  #   import_role:
+  #     name: vm
+
+  # - vars:
+  #     vm_ansible_name: vm052
+  #     vm_suffix: 052
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F32s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm053
+  #     vm_suffix: 053
+  #     vm_disk_size_gb: 8
+  #     vm_instance_type: Standard_F32s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm054
+  #     vm_suffix: 054
+  #     vm_disk_size_gb: 16
+  #     vm_instance_type: Standard_F32s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm055
+  #     vm_suffix: 055
+  #     vm_disk_size_gb: 32
+  #     vm_instance_type: Standard_F32s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm056
+  #     vm_suffix: 056
+  #     vm_disk_size_gb: 4096
+  #     vm_instance_type: Standard_F32s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm057
+  #     vm_suffix: 057
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F48s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm058
+  #     vm_suffix: 058
+  #     vm_disk_size_gb: 8
+  #     vm_instance_type: Standard_F48s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm059
+  #     vm_suffix: 059
+  #     vm_disk_size_gb: 16
+  #     vm_instance_type: Standard_F48s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm060
+  #     vm_suffix: 060
+  #     vm_disk_size_gb: 32
+  #     vm_instance_type: Standard_F48s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm061
+  #     vm_suffix: 061
+  #     vm_disk_size_gb: 4096
+  #     vm_instance_type: Standard_F48s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm062
+  #     vm_suffix: 062
+  #     vm_disk_size_gb: 4 
+  #     vm_instance_type: Standard_F72s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm063
+  #     vm_suffix: 063
+  #     vm_disk_size_gb: 8
+  #     vm_instance_type: Standard_F72s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm064
+  #     vm_suffix: 064
+  #     vm_disk_size_gb: 16
+  #     vm_instance_type: Standard_F72s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm065
+  #     vm_suffix: 065
+  #     vm_disk_size_gb: 32
+  #     vm_instance_type: Standard_F72s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm066
+  #     vm_suffix: 066
+  #     vm_disk_size_gb: 4096
+  #     vm_instance_type: Standard_F72s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm067
+  #     vm_suffix: 067
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm068
+  #     vm_suffix: 068
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - name: Reload Ansible's inventory file
+  #   meta: refresh_inventory
+  # - vars:
+  #     vm_ansible_name: vm069
+  #     vm_suffix: 069
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm070
+  #     vm_suffix: 070
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
+  # - vars:
+  #     vm_ansible_name: vm071
+  #     vm_suffix: 071
+  #     vm_disk_size_gb: 4
+  #     vm_instance_type: Standard_F2s_v2
+  #   import_role:
+  #     name: vm
   - vars:
-      vm_ansible_name: vm001
-      vm_suffix: 001
-      vm_disk_size_gb: 64
-    import_role:
-      name: vm
-  - vars:
-      vm_ansible_name: vm002
-      vm_suffix: 002
-      vm_disk_size_gb: 128
-    import_role:
-      name: vm
-  - vars:
-      vm_ansible_name: vm003
-      vm_suffix: 003
-      vm_disk_size_gb: 256
-    import_role:
-      name: vm
-  - vars:
-      vm_ansible_name: vm004
-      vm_suffix: 004
-      vm_disk_size_gb: 512
-    import_role:
-      name: vm
-  - vars:
-      vm_ansible_name: vm005
-      vm_suffix: 005
-      vm_disk_size_gb: 1024
-    import_role:
-      name: vm
-  - vars:
-      vm_ansible_name: vm006
-      vm_suffix: 006
-      vm_disk_size_gb: 2048
-    import_role:
-      name: vm
-  - vars:
-      vm_ansible_name: vm007
-      vm_suffix: 007
-      vm_disk_size_gb: 8192
-    import_role:
-      name: vm
-  - vars:
-      vm_ansible_name: vm008
-      vm_suffix: 008
-      vm_disk_size_gb: 16384
-    import_role:
-      name: vm
-  - vars:
-      vm_ansible_name: vm009
-      vm_suffix: 009
-      vm_disk_size_gb: 32767
-    import_role:
-      name: vm
-  # This VM is annoyingly named vm-8 as the suffix was converted to 8
-  - vars:
-      vm_ansible_name: vm010
-      vm_suffix: 010
-      vm_disk_size_gb: 8192
+      vm_ansible_name: vm072
+      vm_suffix: 072
+      vm_disk_size_gb: 4
+      vm_instance_type: Standard_F2s_v2
     import_role:
       name: vm
   - name: Reload Ansible's inventory file
     meta: refresh_inventory
 
 - name: Remote Setup
-  hosts: azure_vms
+  hosts: vm072
   tasks:
   - name: Upgrade the Kernel Version
     import_role:
