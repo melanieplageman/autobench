@@ -43,6 +43,12 @@ If this is the first time you are running site.yaml, you may want to comment out
 
 ## Running an fio job
 
+Results from running fio jobs are stored in a Postgres database. Before running fio jobs, create the Postgres results database, and run `roles/fio/files/schema.sql` to create the tables used for fio results. 
+
+Once the fio results database is set up, provide the database connection information either by altering `roles/fio/defaults/main.yaml` or by providing these parameters as extra vars to the `ansible-playbook` command when running `fio.yaml`. 
+
+Previously, the fio role saved run metadata to JSON files. To load these into the database, modify `roles/fio/files/load.py` with the appropriate connection information and result file location and run it.
+
 To run one or more fio jobs, either define your fio job details in `fio.yaml`, define the var `fio_job_file`, or delete this var and edit the fio job file template `roles/fio/templates/profile.fio.j2`.
 To change the kernel parameters' values, edit them in `fio.yaml`. To change which kernel parameters are under test, you will also need to add code to set the new parameter in the `disk_kernel` role and add this setting to what is appended to the index file in the `fio` role.
 To run the fio jobs, run the top level `fio.yaml` file.
@@ -148,8 +154,9 @@ This directory houses most of the tasks for all of the plays in this project.
   - `defaults` contain parameters that the user may want to set
   - `tasks` contains two playbooks
     - `kernel_settings.yaml` contains all of the tasks for changing kernel settings for the purposes of I/O benchmarking
-    - `main.yaml`contains all of the tasks for setting up and running an FIO job on the target host
+    - `main.yaml` contains all of the tasks for setting up and running an FIO job on the target host
   - `templates` contains the template for generating the profile with the FIO job settings and kernel parameters specified in profile supplied by the user when running the fio playbook
+  - `files` contains scripts for setting up the fio results database
 - `git` role: This just installs git
 - `postgres` role:
   - `defaults` contain parameters that the user may want to set

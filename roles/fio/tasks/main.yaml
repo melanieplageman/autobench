@@ -27,7 +27,7 @@
   command: >
     fio
       --directory="{{ fio_target_directory | quote }}"
-      --output-format=json+ 
+      --output-format=json+
       --output="{{ ansible_user_dir }}/fio_output/{{ fio_result_file }}"
     "{{ ansible_user_dir }}/job.fio"
   args:
@@ -51,27 +51,40 @@
     dest: "{{ fio_results_directory }}"
     flat: yes
 
-- name: Append settings to index file
-  vars:
-    index: "{{ lookup('file', fio_index_file) | from_json }}"
-    run_info:
-      settings:
-        schedtool: False
-        IUT: 
-          vm: "{{ hostvars[inventory_hostname]['vm_instance_info'] }}"
-          disk: "{{ hostvars[inventory_hostname]['vm_data_disk_specs'] }}"
-        kernel: 
-          nr_requests: "{{ disk_kernel_nr_requests }}"
-          max_sectors_kb: "{{ disk_kernel_max_sectors_kb }}"
-          read_ahead_kb: "{{ disk_kernel_read_ahead_kb }}"
-          queue_depth: "{{ disk_kernel_queue_depth }}"
-          io_scheduler: "{{ disk_kernel_io_scheduler }}"
-          wbt_lat_usec: "{{ disk_kernel_wbt_lat_usec }}"
-      result_file: "{{ fio_result_file }}"
-  copy:
-    content: "{{ (index + [run_info]) | to_json }}"
-    dest: "{{ fio_index_file }}"
+# This step only works if the database schema has already been loaded
+- name: Insert run settings and fio results to database
+  community.general.postgresql_query:
+    db: "{{ fio_results_dbname }}"
+    login_user: "{{ fio_results_db_user }}"
+    login_password: "{{ fio_results_db_password }}"
+    login_host: "{{ fio_results_db_host }}"
+    ssl_mode: "{{ fio_results_ssl_mode }}"
+    query: >
+      INSERT INTO run (
+      disk_id, disk_device, vm_id,
+      kernel_nr_requests, kernel_max_sectors_kb,
+      kernel_read_ahead_kb, kernel_queue_depth,
+      kernel_wbt_lat_usec, kernel_io_scheduler,
+      data
+      )
+      SELECT
+        (SELECT id FROM disk WHERE disk.size_gb = %(disk_size_gb)s) AS disk_id,
+        %(disk_device)s,
+        (SELECT id FROM vm WHERE vm.instance_type = %(vm_instance_type)s) AS vm_id,
+        %(kernel_nr_requests)s, %(kernel_max_sectors_kb)s, %(kernel_read_ahead_kb)s,
+        %(kernel_queue_depth)s, %(kernel_wbt_lat_usec)s, %(kernel_io_scheduler)s,
+        %(data)s
+    named_args:
+      disk_size_gb: "{{ hostvars[inventory_hostname]['vm_data_disk_specs']['size_gb'] }}"
+      disk_device: "{{ hostvars[inventory_hostname]['vm_data_disk_specs']['device'] }}"
+      vm_instance_type: "{{ hostvars[inventory_hostname]['vm_instance_info']['specs']['instance_type'] }}"
+      kernel_nr_requests: "{{ disk_kernel_nr_requests }}"
+      kernel_max_sectors_kb: "{{ disk_kernel_max_sectors_kb }}"
+      kernel_read_ahead_kb: "{{ disk_kernel_read_ahead_kb }}"
+      kernel_queue_depth: "{{ disk_kernel_queue_depth }}"
+      kernel_wbt_lat_usec: "{{ disk_kernel_wbt_lat_usec }}"
+      kernel_io_scheduler: "{{ disk_kernel_io_scheduler }}"
+      data: "{{ lookup('file', (fio_results_directory, fio_result_file) | path_join) | string }}"
   delegate_to: localhost
-
 
 # vim: set ft=yaml.ansible:

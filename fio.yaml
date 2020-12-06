@@ -1,8 +1,6 @@
 - name: Set up and run FIO jobs
   hosts: azure_vms
   vars:
-    fio_index_file: "{{ playbook_dir }}/results/fio/index-{{ inventory_hostname }}.json"
-
     fio_job_file: |
       [global]
       time_based=1
