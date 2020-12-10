@@ -74,12 +74,6 @@
       ]) | map("combine") }}
 
   tasks:
-  - name: Create index file
-    copy:
-      content: "[]"
-      dest: "{{ fio_index_file }}"
-    delegate_to: localhost
-
   - name: Run fio role for all combinations of settings
     include_role:
       name: loop_fio
