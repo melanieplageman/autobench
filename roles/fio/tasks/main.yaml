@@ -8,7 +8,7 @@
 
 - name: Copy fio job file to target host
   copy:
-    content: "{{ fio_job_file }}"
+    src: "workloads/{{ workload_id }}_{{ workload_size }}.fio"
     dest: job.fio
 
 - name: Create an fio output directory on the target host
@@ -54,6 +54,7 @@
     ssl_mode: "{{ fio_results_ssl_mode }}"
     query: >
       INSERT INTO run (
+      workload_id,
       disk_id, disk_device, vm_id,
       kernel_nr_requests, kernel_max_sectors_kb,
       kernel_read_ahead_kb, kernel_queue_depth,
@@ -61,6 +62,7 @@
       data
       )
       SELECT
+        %(workload_id)s,
         (SELECT id FROM disk WHERE disk.size_gb = %(disk_size_gb)s) AS disk_id,
         %(disk_device)s,
         (SELECT id FROM vm WHERE vm.instance_type = %(vm_instance_type)s) AS vm_id,
@@ -68,6 +70,7 @@
         %(kernel_queue_depth)s, %(kernel_wbt_lat_usec)s, %(kernel_io_scheduler)s,
         %(data)s
     named_args:
+      workload_id: "{{ workload_id }}"
       disk_size_gb: "{{ hostvars[inventory_hostname]['vm_data_disk_specs']['size_gb'] }}"
       disk_device: "{{ hostvars[inventory_hostname]['vm_data_disk_specs']['device'] }}"
       vm_instance_type: "{{ hostvars[inventory_hostname]['vm_instance_info']['specs']['instance_type'] }}"

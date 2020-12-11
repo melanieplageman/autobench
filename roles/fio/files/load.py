@@ -14,9 +14,10 @@ sslmode="require"
 conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
 
 xform_query = """
-INSERT INTO run (schedtool, disk_id, disk_device, vm_id, kernel_nr_requests, kernel_max_sectors_kb, kernel_read_ahead_kb, kernel_queue_depth, kernel_wbt_lat_usec, kernel_io_scheduler, data)
+INSERT INTO run (schedtool, workload_id, disk_id, disk_device, vm_id, kernel_nr_requests, kernel_max_sectors_kb, kernel_read_ahead_kb, kernel_queue_depth, kernel_wbt_lat_usec, kernel_io_scheduler, data)
   SELECT
     (index_data->'settings'->>'schedtool')::bool as schedtool,
+    1 as workload_id,
     disk.id as disk_id,
     index_data->'settings'->'IUT'->'disk'->>'device' as disk_device,
     vm.id as vm_id,
