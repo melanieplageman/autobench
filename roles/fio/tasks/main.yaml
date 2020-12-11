@@ -10,13 +10,6 @@
   copy:
     content: "{{ fio_job_file }}"
     dest: job.fio
-  when: fio_job_file is defined
-
-- name: Copy fio job file to target host 
-  template:
-    src: profile.fio.j2
-    dest: job.fio
-  when: fio_job_file is not defined
 
 - name: Create an fio output directory on the target host
   file:

@@ -1,0 +1,82 @@
+- name: Set up and run FIO jobs
+  hosts: big_disk_vms
+  vars:
+    fio_job_file: |
+      [global]
+      time_based=1
+      ioengine=sync
+      buffered=1
+      direct=0
+      runtime=120
+      bs=8k
+
+      [job1]
+      name=checkpointer
+      filename={{ fio_write_job1_data_filename }}
+      iodepth=1
+      size=23G
+      rw=write
+      fsync_on_close=1
+      sync_file_range=write:32
+      numjobs=1
+
+      [job2]
+      name=wal
+      filename={{ fio_write_job2_data_filename }}
+      iodepth=1
+      size=4G
+      rw=write
+      fdatasync=1
+      numjobs=1
+
+      [job3]
+      name=large_read
+      iodepth=1
+      rw=read
+      filesize=5G
+      nrfiles=6
+      fdatasync=0
+      numjobs=1
+
+    fio_loop_agenda: |
+      {{ ([
+
+        { "disk_kernel_max_sectors_kb": 92 },
+        { "disk_kernel_max_sectors_kb": 66 },
+        { "disk_kernel_max_sectors_kb": 80 },
+
+      ]) | product([
+
+        { "disk_kernel_read_ahead_kb": 680 },
+        { "disk_kernel_read_ahead_kb": 800 },
+        { "disk_kernel_read_ahead_kb": 3000 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_queue_depth": 18 },
+        { "disk_kernel_queue_depth": 26 },
+        { "disk_kernel_queue_depth": 62 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_wbt_lat_usec": 0 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_nr_requests": 256 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_io_scheduler": "mq-deadline" },
+
+      ]) | map("combine") }}
+
+  tasks:
+  - name: Run fio role for all combinations of settings
+    include_role:
+      name: loop_fio
+    loop: "{{ fio_loop_agenda }}"
+    loop_control:
+      extended: yes
+
+# vim: set ft=yaml.ansible:
