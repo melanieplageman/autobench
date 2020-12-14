@@ -7,9 +7,11 @@
   apt: name=schedtool
 
 - name: Copy fio job file to target host
-  copy:
-    src: "workloads/{{ workload_id }}_{{ workload_size }}.fio"
-    dest: job.fio
+  template:
+    src: "templates/workloads/{{ workload_id }}_{{ workload_size }}.j2"
+    dest: "{{ ansible_user_dir }}/job.fio"
+    mode: "0755"
+  when: fio_job_file is not defined
 
 - name: Create an fio output directory on the target host
   file:
