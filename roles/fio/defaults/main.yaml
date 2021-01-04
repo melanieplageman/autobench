@@ -10,6 +10,10 @@ fio_result_file: fio_result.json
 
 fio_write_job1_data_filename: write_job1_data
 fio_write_job2_data_filename: write_job2_data
+fio_read_job3_data_filename: read_job3_data
+fio_read_job4_data_filename: read_job4_data
+
+delete_fio_read_files: 0
 
 fio_results_directory: "{{ playbook_dir }}/results/fio/"
 fio_results_dbname: iobench

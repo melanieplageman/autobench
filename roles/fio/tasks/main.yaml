@@ -40,6 +40,18 @@
     state: absent
   when: fio_write_job2_data_filename is defined
 
+- name: Delete fio read job 3 file
+  file:
+    path: "{{ fio_target_directory }}/{{ fio_read_job3_data_filename }}"
+    state: absent
+  when: delete_fio_read_files == 1 and fio_read_job3_data_filename is defined
+
+- name: Delete fio read job 4 file
+  file:
+    path: "{{ fio_target_directory }}/{{ fio_read_job4_data_filename }}"
+    state: absent
+  when: delete_fio_read_files == 1 and fio_read_job4_data_filename is defined
+
 - name: Copy fio output file from host
   fetch:
     src: "{{ ansible_user_dir }}/fio_output/{{ fio_result_file }}"
