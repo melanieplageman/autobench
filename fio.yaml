@@ -1,20 +1,66 @@
 - name: Set up and run FIO jobs
   hosts: f2_big_disk_vms, f4_big_disk_vms, f8_big_disk_vms, f16_big_disk_vms, f32_big_disk_vms, f48_big_disk_vms, f64_big_disk_vms, f72_big_disk_vms
   vars:
+    schedtool: False
     workload_id: 1
     workload_size: large
+    ideal_settings: settings-1
+    delete_fio_read_files: 1
   tasks:
-  - name: Read the settings from CSV
-    community.general.read_csv:
-      path: settings.csv
-    register: settings
-    delegate_to: localhost
+  - set_fact:
+      host_instance_disk: "{{ hostvars[inventory_hostname]['vm_instance_info']['specs']['instance_type'] }}_{{ hostvars[inventory_hostname]['vm_data_disk_specs']['size_gb'] }}"
 
-  - name: Run fio role for each specified configuration
-    include_role:
-      name: loop_fio
-    loop: "{{ settings.list }}"
-    loop_control:
-      extended: yes
+  - name: Lookup my settings
+    set_fact:
+      settings: "{{ (lookup('file', ideal_settings + '.json') | from_json).get(host_instance_disk) }}"
+
+  - debug:
+      msg: "{{ settings }}"
+
+  - set_fact:
+      disk_kernel_max_sectors_kb: "{{ settings.disk_kernel_max_sectors_kb }}"
+    when: settings.disk_kernel_max_sectors_kb is defined
+
+  - set_fact:
+      disk_kernel_read_ahead_kb: "{{ settings.disk_kernel_read_ahead_kb }}"
+    when: settings.disk_kernel_read_ahead_kb is defined
+
+  - set_fact:
+      disk_kernel_queue_depth: "{{ settings.disk_kernel_queue_depth }}"
+    when: settings.disk_kernel_queue_depth is defined
+
+  - set_fact:
+      disk_kernel_nr_requests: "{{ settings.disk_kernel_nr_requests }}"
+    when: settings.disk_kernel_nr_requests is defined
+
+  - set_fact:
+      disk_kernel_io_scheduler: "{{ settings.disk_kernel_io_scheduler }}"
+    when: settings.disk_kernel_io_scheduler
+
+  - set_fact:
+      disk_kernel_wbt_lat_usec: "{{ settings.disk_kernel_wbt_lat_usec }}"
+    when: settings.disk_kernel_wbt_lat_usec is defined
+
+  - name: Set kernel device parameters and run fio
+    block:
+      - name: Format and trim the disk
+        include_role:
+          name: data_disk
+          tasks_from: reset
+
+      - name: Set kernel device parameters
+        include_role:
+          name: disk_kernel
+
+      - name: Run fio jobs
+        vars:
+          fio_result_file: "{{ inventory_hostname }}-{{ ideal_settings }}.json"
+        include_role:
+          name: fio
+
+    rescue:
+      - name: Print when errors
+        debug:
+          msg: "Skipping this combination"
 
 # vim: set ft=yaml.ansible:
