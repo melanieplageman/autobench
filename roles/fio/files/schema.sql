@@ -3,8 +3,12 @@ CREATE TABLE IF NOT EXISTS disk (
   size_gb INTEGER NOT NULL CHECK (size_gb > 0),
   provisioned_iops INTEGER NOT NULL CHECK (
     provisioned_iops > 0),
+  burst_iops INTEGER NOT NULL CHECK (
+    burst_iops > 0),
   provisioned_tput_mbps INTEGER NOT NULL CHECK (
     provisioned_tput_mbps > 0),
+  burst_tput_mbps INTEGER NOT NULL CHECK (
+    burst_tput_mbps > 0),
   PRIMARY KEY(id)
 );
 
@@ -51,21 +55,26 @@ CREATE TABLE IF NOT EXISTS run (
 );
 
 TRUNCATE disk CASCADE;
-INSERT INTO disk (size_gb, provisioned_iops, provisioned_tput_mbps) VALUES
-  (4,     120, 25),
-  (8,     120, 25),
-  (16,    120, 25),
-  (32,    120, 25),
-  (64,    240, 50),
-  (128,   500, 100),
-  (256,   1100, 125),
-  (512,   2300, 150),
-  (1024, 5000, 200),
-  (4096, 7500 ,250),
-  (2048, 7500 ,250),
-  (8192, 16000 ,500),
-  (16384, 18000 ,750),
-  (32767, 20000 ,900);
+INSERT INTO disk (
+  size_gb,
+  provisioned_iops,
+  burst_iops,
+  provisioned_tput_mbps,
+  burst_tput_mbps) VALUES
+  (4,     120, 3500, 25, 170),
+  (8,     120, 3500, 25, 170),
+  (16,    120, 3500, 25, 170),
+  (32,    120, 3500, 25, 170),
+  (64,    240, 3500, 50, 170),
+  (128,   500, 3500, 100, 170),
+  (256,   1100, 3500, 125, 170),
+  (512,   2300, 3500, 150, 170),
+  (1024, 5000, 5000, 200, 200),
+  (4096, 7500, 7500, 250, 250),
+  (2048, 7500, 7500, 250, 250),
+  (8192, 16000, 16000, 500, 500),
+  (16384, 18000, 18000, 750, 750),
+  (32767, 20000, 20000, 900, 900);
 
 TRUNCATE vm CASCADE;
 INSERT INTO vm(
