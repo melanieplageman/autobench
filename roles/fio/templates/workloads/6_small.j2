@@ -1,0 +1,16 @@
+[global]
+time_based=1
+ioengine=sync
+buffered=1
+direct=0
+runtime=120
+bs=8k
+
+[job1]
+name=checkpointer
+filename={{ fio_write_job1_data_filename }}
+iodepth=1
+size=3G
+rw=write
+fsync_on_close=1
+numjobs=1

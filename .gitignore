@@ -1,5 +1,9 @@
 /host_vars/*
 /results/**
+settings*csv
+settings*json
+baseline_settings*csv
+baseline_settings*json
 
 # Ansible
 
