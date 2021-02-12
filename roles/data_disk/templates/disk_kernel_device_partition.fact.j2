@@ -1,4 +1,0 @@
-#! /bin/bash
-
-partition="$(sudo sfdisk --json /dev/{{ ansible_local.disk_kernel_device | quote }} | jq -r '.partitiontable.partitions[0].node')"
-echo "\"$(basename "$partition")\""

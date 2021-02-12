@@ -39,8 +39,6 @@
     path: "{{ data_disk_mount_dir }}"
     state: absent
 
-# TODO: consider using a label here to allow using this label to refer to the
-# disk by label in subsequent tasks
 - name: Format the disk and build the filesystem
   become: yes
   filesystem:
@@ -48,13 +46,10 @@
     dev: "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
     force: yes
 
-- name: Copy over custom fact on partition to help disk_kernel role
+- name: Given formatted disk partition information, get UUID
   become: yes
-  template:
-    dest: /etc/ansible/facts.d/disk_kernel_device_partition.fact
-    src: disk_kernel_device_partition.fact.j2
-    mode: "0755"
-  register: disk_kernel_device_partition_fact_file
+  command: blkid -s UUID -o value "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+  register: uuid_data_disk_partition
 
 - name: Make a directory for the filesystem
   become: yes
@@ -64,7 +59,7 @@
   become: yes
   ansible.posix.mount:
     path: "{{ data_disk_mount_dir }}"
-    src: "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+    src: UUID="{{ uuid_data_disk_partition.stdout }}"
     fstype: ext4
     state: mounted
 
