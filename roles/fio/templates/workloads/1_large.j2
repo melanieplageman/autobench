@@ -2,7 +2,6 @@
 time_based=1
 ioengine=sync
 buffered=1
-direct=0
 runtime=120
 bs=8k
 
@@ -30,8 +29,7 @@ name=large_read
 filename={{ fio_read_job3_data_filename }}
 iodepth=1
 rw=read
-filesize=5G
-nrfiles=6
+filesize=30G
 fdatasync=0
 numjobs=1
 
