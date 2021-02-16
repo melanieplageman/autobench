@@ -46,8 +46,6 @@ Results from running fio jobs are stored in a Postgres database. Before running 
 
 Once the fio results database is set up, provide the database connection information either by altering `roles/fio/defaults/main.yaml` or by providing these parameters as extra vars to the `ansible-playbook` command when running `fio.yaml`. 
 
-Previously, the fio role saved run metadata to JSON files. To load these into the database, modify `roles/fio/files/load.py` with the appropriate connection information and result file location and run it.
-
 To run one or more fio jobs, either define your fio job details in `fio.yaml`, define the var `fio_job_file`, or delete this var and edit the fio job file template `roles/fio/templates/profile.fio.j2`.
 To change the kernel parameters' values, edit them in `fio.yaml`. To change which kernel parameters are under test, you will also need to add code to set the new parameter in the `disk_kernel` role and add this setting to what is appended to the index file in the `fio` role.
 To run the fio jobs, run the top level `fio.yaml` file.
