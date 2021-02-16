@@ -100,4 +100,11 @@
       data: "{{ lookup('file', (fio_results_directory, fio_result_file) | path_join) | string }}"
   delegate_to: localhost
 
+# TODO: condition this on the database INSERT being successful
+- name: Delete fio output file from localhost
+  file:
+    path: "{{ fio_results_directory }}/{{fio_result_file}}"
+    state: absent
+  delegate_to: localhost
+
 # vim: set ft=yaml.ansible:

@@ -44,14 +44,63 @@ If this is the first time you are running site.yaml, you may want to comment out
 
 Results from running fio jobs are stored in a Postgres database. Before running fio jobs, create the Postgres results database, and run `roles/fio/files/schema.sql` to create the tables used for fio results. 
 
-Once the fio results database is set up, provide the database connection information either by altering `roles/fio/defaults/main.yaml` or by providing these parameters as extra vars to the `ansible-playbook` command when running `fio.yaml`. 
+Once the fio results database is set up, provide the database connection information either by altering `roles/fio/defaults/main.yaml` or by providing these parameters as extra vars to the `ansible-playbook` command when running `fio.yaml` or `fio_combinations.yaml`. 
 
-To run one or more fio jobs, either define your fio job details in `fio.yaml`, define the var `fio_job_file`, or delete this var and edit the fio job file template `roles/fio/templates/profile.fio.j2`.
-To change the kernel parameters' values, edit them in `fio.yaml`. To change which kernel parameters are under test, you will also need to add code to set the new parameter in the `disk_kernel` role and add this setting to what is appended to the index file in the `fio` role.
-To run the fio jobs, run the top level `fio.yaml` file.
+The fio plays are meant to test the effect of different block device settings on overall performance of a given VM with a given disk.
+
+As such, both `fio.yaml` and `fio_combinations.yaml` will leverage the `disk_kernel` role which sets these settings.
+
+There are two ways to run fio jobs on VMs in autobench.
+
+### Method 1
+
+The intent of the first way of running fio (with `fio.yaml`) is to run specific target settings calculated from formulas for each VM and disk size. 
+
+First create a CSV with the following fields:
+
+```
+vm_instance_type,vm_cpus,disk_size_gb,vm_disk,disk_kernel_max_sectors_kb,disk_kernel_queue_depth,disk_kernel_read_ahead_kb,disk_kernel_nr_requests,disk_kernel_wbt_lat_usec,disk_kernel_io_scheduler
+Standard_F2s_v2,2,4,Standard_F2s_v2_4,20,10,140,10,0,mq-deadline
+Standard_F8s_v2,8,4,Standard_F8s_v2_4,65,11,520,11,0,mq-deadline
+```
+
+Then modify the included `load.py` script to point to the location of the CSV and run `load.py`. This will create a JSON file (if you specify `to_file=True`) which will be used in `fio.yaml`.
+Alternatively, you can create the JSON file yourself using the same schema as described in `load.py`.
+The result should be a JSON file in the top-level autobench directory.
+
+Next you should update `fio.yaml` `vars`:
+`schedtool` should remain `False` unless you have also updated the task "Run fio jobs" in `roles/fio/tasks/main.yaml` to use Schedtool.
+
+`workload_id` refers to the workload you wish to run. Workloads are added in `roles/fio/templates/workloads/` and should follow the naming convention `[workload_id]_[size].j2` where size must match the size specified in `fio.yaml` under `vars` and called `workload_size`.
+
+`ideal_settings` should be set to the basename of the JSON settings file you created and put in the top-level autobench directory in the above step.
+
+`delete_fio_read_files` determines whether or not the files created by fio for read jobs are deleted after each run. Reusing the files makes it faster to do multiple runs, but, if you are running multiple different workloads on the VM, you may run out of disk space, so setting this to `1` may be desirable.
+
+Assuming you have already provisioned VMs and updated the inventory, you may now run `fio.yaml`. The results will be populated in the specified results database.
+
+Set the number of [forks](https://docs.ansible.com/ansible/latest/user_guide/playbooks_strategies.html#setting-the-number-of-forks) to leverage parallelism. 
 
 ```sh
 ansible-playbook fio.yaml -e "privatekey=PRIVATE_KEY_FILE"
+```
+
+### Method 2
+
+The second way to run fio is to run `fio_combinations.yaml`. The intent of this method is to explore the relationship between different combinations of block device settings. It is easier to use and can also be used to run a single fio job on a single host by editing the combinations down to one setting for each `product()` call.
+
+To run one or more fio jobs, edit the `fio_job_file` var in `fio_combinations.yaml`. 
+Note that you should confirm that the `filesize` fio job parameters are appropriate for the disk size under test.
+
+To change the existing kernel parameters' values, edit the `fio_loop_agenda` var in `fio.yaml`.
+The `loop_fio` role included in `fio_combinations.yaml` will run every combination of the settings specified in the `fio_loop_agenda` var.
+
+To change which kernel parameters are under test, you will also need to add code to set the new parameter in the `disk_kernel` role and add this setting to the `run` table in the `fio` role, both in the `run` table schema in `roles/fio/files/schema.sql` and the `INSERT` statement in the "Insert run settings and fio results to database" task in `roles/fio/tasks.main.yaml`.
+
+Assuming you have already provisioned VMs and updated the inventory, you may now run `fio_combinations.yaml`. The results will be populated in the specified results database.
+
+```sh
+ansible-playbook fio_combinations.yaml -e "privatekey=PRIVATE_KEY_FILE"
 ```
 
 ## Running TPC-DS
@@ -119,12 +168,12 @@ Ansible project directory layout hints
 
 `site.yaml`: the main Ansible playbook in this project currently. It runs the VM role tasks. First it provisions the VMs and associated resources, then it runs a set up tasks to do setup on the provisioned VM, including loading a newer Linux kernel and restarting the VM. Though you can run the Postgres and TPC-DS roles on other hosts, currently the playbook is geared toward an environment where you can provision a brand new VM for the explicit purpose of doing this work.
 
-`tpcds.yaml`, `fio.yaml`, `postgres.yaml`: These are the three main playbooks that currently exist. `fio.yaml` will run the tasks in the `fio` role, as well as the dependent `disk_kernel` role which sets the kernel settings to those under test. Currently it is set to run only on an `azure_vm` host, however it is easy to change that. `postgres.yaml` will run the tasks in the `postgres` role as well as those in the `systemd-user` and `git` roles. `tpcds.yaml` will run the tasks in both the `postgres` role (and its dependencies) as well as the `tpcds` role.
+`tpcds.yaml`, `fio.yaml`, `fio_combinations.yaml`, `postgres.yaml`: These are the four main playbooks that currently exist. `fio.yaml` and `fio_combinations.yaml` will run the tasks in the `fio` role, as well as the dependent `disk_kernel` role which sets the kernel settings to those under test. Currently it is set to run only on an `azure_vm` host, however it is easy to change that. `postgres.yaml` will run the tasks in the `postgres` role as well as those in the `systemd-user` and `git` roles. `tpcds.yaml` will run the tasks in both the `postgres` role (and its dependencies) as well as the `tpcds` role.
 
 If we start working on various TPC-DS performance experiments, it could be advantageous to create a profile with both various Postgres and TPC-DS settings which will be consumed by the `tpcds` role as well as used to generate a modified `postgresql.conf` file using a template in the `postgres` role. These could go in a new directory in the `profiles` directory.
 
 `results` directory:
-This is the target for the formatted output which will be fetched from the target host and copied to the user's local machine. Results copied here are usually in JSON format. However, fio results metadata is stored in a database.
+This is the target for the formatted output which will be fetched from the target host and copied to the user's local machine. Results copied here are usually in JSON format. However, fio results metadata are stored in a database and the original JSON is deleted.
 
 `roles` directory:
 This directory houses most of the tasks for all of the plays in this project.
@@ -149,7 +198,7 @@ This directory houses most of the tasks for all of the plays in this project.
   - `defaults` contain parameters that the user may want to set
   - `tasks`
     - `main.yaml` contains all of the tasks for setting up and running an fio job on the target host
-  - `templates` contains the template for generating the profile with the fio job settings and kernel parameters specified in profile supplied by the user when running the fio playbook
+  - `templates` contains templates for fio workloads (in the `workloads` sub-directory) which are used by `fio.yaml` to gernerate fio job files copied to the target VM
   - `files` contains scripts for setting up the fio results database
 - `loop_fio` role: This runs the fio role with every combination of kernel parameters from `fio.yaml`
 - `disk_kernel` role: This sets kernel parameters on the target host.
