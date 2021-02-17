@@ -1,0 +1,33 @@
+- import_role: name=systemd-user
+
+- name: Stop the PostgreSQL service
+  systemd:
+    name: ab-postgresql
+    scope: user
+    state: stopped
+  failed_when: false
+
+- name: Remove the database
+  file: path="{{ postgresql_data_dir }}" state=absent
+
+- name: Install the unit file
+  template:
+    src: postgresql.service.j2
+    dest: .config/systemd/user/ab-postgresql.service
+  register: unit_file
+
+- name: Initialize the database
+  command: "{{ postgresql_root | quote }}/bin/initdb -D {{ postgresql_data_dir }}"
+
+- name: Start the PostgreSQL service
+  systemd:
+    daemon_reload: "{{ unit_file.changed }}"
+    name: ab-postgresql
+    scope: user
+    state: started
+
+- name: Install psycopg2
+  become: yes
+  apt: pkg=python3-psycopg2
+
+# vim: set ft=yaml.ansible:

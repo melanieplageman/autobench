@@ -1,2 +1,3 @@
 linux_kernel_package: "linux-image-5.9.0-0.bpo.5-amd64-unsigned"
 nr_hw_queues: 0
+needed_hugepages : "{{ ((kernel_memory_bytes * 0.8) | int) // (2 * 1024 * 1024) + 1 }}"

@@ -1,0 +1,25 @@
+[global]
+time_based=1
+ioengine=sync
+buffered=1
+runtime=200
+bs=8k
+
+[job2]
+name=wal
+filename={{ fio_write_job2_data_filename }}
+iodepth=1
+size=4G
+rw=write
+fdatasync=1
+numjobs=1
+
+[job3]
+name=large_read
+filename={{ fio_read_job3_data_filename }}
+iodepth=1
+rw=read
+filesize=1G
+fdatasync=0
+# TODO: max out numjobs * filesize at disk size
+numjobs={{ fio_ncpu|int - 1 }}

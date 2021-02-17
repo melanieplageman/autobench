@@ -1,0 +1,72 @@
+- name: Set up pgbench and run
+  hosts: vm007
+  vars:
+    postgresql_data_dir: /var/lib/autobench1/data
+    postgresql_root: "{{ ansible_user_dir }}/.autobench/postgresql"
+    postgresql_redo: 1
+    postgresql_huge_pages: False
+    postgresql_revision: REL_15_STABLE
+    postgresql_repo: https://github.com/postgres/postgres.git
+  tasks:
+  - name: Disable huge pages so that ansible works
+    include_role:
+      name: kernel
+      tasks_from: huge_pages_free
+    when: postgresql_huge_pages
+
+  - name: Reboot machine so that the next run starts clean
+    become: yes
+    reboot:
+    when: postgresql_huge_pages
+
+  - name: Install sysstat
+    apt:
+      name: sysstat
+    become: true
+ 
+  - name: Install fio
+    apt:
+      name: fio
+    become: true
+
+  - name: Set up Postgres
+    include_role:
+      name: postgres
+ 
+  - name: Create pg_prewarm extension
+    community.general.postgresql_ext:
+      name: pg_prewarm
+      db: postgres
+      login_unix_socket: "{{ postgresql_root }}"
+      login_user: "{{ ansible_user_id }}"
+      cascade: yes
+      version: latest
+
+  - name: Trim the filesystem
+    include_role:
+      name: data_disk
+      tasks_from: trim
+
+  - name: Reboot before allocating huge pages to prevent fragmentation
+    become: yes
+    reboot:
+    when: postgresql_huge_pages
+
+  - name: Allocate huge pages
+    include_role:
+      name: kernel
+      tasks_from: huge_pages_alloc
+    when: postgresql_huge_pages
+
+  - name: Create /etc/ansible/facts.d
+    become: yes
+    file: name=/etc/ansible/facts.d state=directory
+
+  - name: Copy over custom fact to be used by script
+    become: yes
+    template:
+      dest: specs.json
+      src: metadata.j2
+      mode: "0755"
+
+# vim: set ft=yaml.ansible:

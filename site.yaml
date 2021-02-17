@@ -1,11 +1,24 @@
 - name: Create the VM in Azure
   hosts: localhost
   tasks:
+  
+   - vars:
+       vm_ansible_name: vm007
+       vm_suffix: 007
+       vm_disk_size_gb: 128
+       data_disk_caching_policy: 'ReadOnly'
+       lun: 1
+       vm_instance_type: Standard_D2ds_v4
+     import_role:
+       name: vm
+ 
   - vars:
-      vm_ansible_name: vm001
-      vm_suffix: 001
-      vm_disk_size_gb: 8192
-      vm_instance_type: Standard_F16s_v2
+      vm_ansible_name: vm004
+      vm_suffix: 004
+      vm_disk_size_gb: 2048
+      data_disk_caching_policy: 'ReadOnly'
+      lun: 1
+      vm_instance_type: Standard_D16ds_v4
     import_role:
       name: vm
 
@@ -13,12 +26,54 @@
     meta: refresh_inventory
 
 - name: Remote Setup
-  hosts: vm001
+  hosts: vm007
   tasks:
-  - name: Upgrade the Kernel Version
-    import_role:
-      name: kernel
-      tasks_from: custom_upgrade
+  - name: Copy over custom unmodified kernel
+    copy:
+      src: linux-image-5.18.5_5.18.5-10.00.Custom_amd64.deb
+      dest: linux_og.deb
+      owner: "{{ ansible_user_id }}"
+      group: "{{ ansible_user_id }}" 
+
+  - name: Upgrade to custom kernel
+    apt:
+      deb: linux_og.deb
+    become: true
+
+  - name: Copy over custom modified kernel
+    copy:
+      src: linux-image-5.18.5+_5.18.5+-10.00.Custom_amd64.deb
+      dest: linux_modified.deb
+      owner: "{{ ansible_user_id }}"
+      group: "{{ ansible_user_id }}" 
+
+#   - name: Upgrade to custom modified kernel
+#     apt:
+#       deb: linux_modified.deb
+#     become: true
+ 
+  # - name: Upgrade the Kernel Version
+  #   import_role:
+  #     name: kernel
+  #     tasks_from: custom_upgrade
+
+  - name: Print kernel version before reboot
+    debug:
+      var: ansible_facts['kernel']
+
+  - name: Reboot machine with newer kernel
+    become: yes
+    reboot:
+
+  - name: Run facts module to get latest facts
+    setup:
+
+  - name: Print kernel version after reboot
+    debug:
+      var: ansible_facts['kernel']
+
+  - name: Run facts module to get latest facts
+    setup:
 
   - name: Mount and Format the disk
     import_role:

@@ -1,0 +1,19 @@
+{
+  "postgres": {
+    "revision": {{ postgresql_revision | to_json }},
+    "repository": {{ postgresql_repo | to_json }}
+  },
+  "host": {
+    "instance": {
+      "type": {{ (vm_instance_info['specs']['instance_type']) | to_json }},
+      "limits": {
+        "max_data_disks": {{ vm_instance_info['specs']['max_data_disks'] | int }},
+        "uncached_burst_bw_mbps": {{ vm_instance_info['specs']['uncached_burst_bw_mbps'] | int }},
+        "uncached_burst_iops": {{ vm_instance_info['specs']['uncached_burst_iops'] | int }},
+        "uncached_bw_mbps": {{ vm_instance_info['specs']['uncached_bw_mbps'] | int }},
+        "uncached_iops": {{ vm_instance_info['specs']['uncached_iops'] | int }}
+      }
+    },
+    "disk": {{ vm_data_disk_specs | to_json }}
+  }
+}

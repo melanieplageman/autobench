@@ -65,6 +65,7 @@ vm_instance_type,vm_cpus,disk_size_gb,vm_disk,disk_kernel_rotational,disk_kernel
 Standard_F2s_v2,2,4,Standard_F2s_v2_4,1,20,10,140,10,0,mq-deadline,16,2,NULL
 Standard_F8s_v2,8,4,Standard_F8s_v2_4,1,65,11,520,11,0,bfq,NULL,NULL,1
 ```
+%% TODO: add memory_GiB to fio settings schema above and to all CSVs
 
 Then modify the included `load.py` script to point to the location of the CSV and run `load.py`. This will create a JSON file (if you specify `to_file=True`) which will be used in `fio.yaml`.
 Alternatively, you can create the JSON file yourself using the same schema as described in `load.py`.
@@ -107,6 +108,7 @@ Set the number of [forks](https://docs.ansible.com/ansible/latest/user_guide/pla
 
 ```sh
 ansible-playbook fio_auto.yaml -e "privatekey=PRIVATE_KEY_FILE"
+```
 
 ### Method 3
 
@@ -241,5 +243,6 @@ This directory houses most of the tasks for all of the plays in this project.
   - `templates`
   - `vars` contains variables that should not be changed by the playbook user
 
-# TODO
-- Add a pgbench role which depends on Postgres
+# TODO:
+- Refactor playbook to allow for multiple devices attached to the same VM
+- Change /var/lib/autobench to /var/lib/autobench1 to better support multiple devices attached

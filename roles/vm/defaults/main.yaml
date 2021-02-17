@@ -1,5 +1,5 @@
-vm_location: westus2
-vm_resource_group_name: "{{ ansible_user_id }}"
+vm_location: eastus2
+vm_resource_group_name: melanieplageman
 vm_instance_type: Standard_F16s_v2
 vm_disk_size_gb: 8192
 vm_suffix: 001

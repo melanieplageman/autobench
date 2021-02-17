@@ -3,13 +3,13 @@
     az vm disk detach 
     -g "{{ vm_resource_group_name | quote }}"
     --vm-name "vm-{{ vm_suffix | quote }}"
-    -n "dd-{{ vm_suffix | quote }}"
+    -n "dd-{{ vm_suffix | quote }}-{{ lun | string }}"
   failed_when: "False"
   tags: disk
 
 - name: Delete a Data Disk
   azure_rm_manageddisk:
-    name: "dd-{{ vm_suffix }}"
+    name: "dd-{{ vm_suffix }}-{{ lun | string }}"
     resource_group: "{{ vm_resource_group_name }}"
     state: absent
   tags: disk

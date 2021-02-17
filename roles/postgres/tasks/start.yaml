@@ -1,0 +1,6 @@
+# TODO: do I need daemon_reload?
+- name: Start the PostgreSQL service
+  systemd:
+    name: ab-postgresql
+    scope: user
+    state: started

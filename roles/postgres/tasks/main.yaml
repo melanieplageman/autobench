@@ -1,3 +1,6 @@
+- import_role: name=git
+- import_role: name=systemd-user
+
 - name: Clone the PostgreSQL git repository
   git:
     dest: "{{ postgresql_root }}/source"
@@ -15,7 +18,7 @@
   when: repo.changed or postgresql_redo
 
 - name: Remove the database
-  file: path="{{ postgresql_root }}/data" state=absent
+  file: path="{{ postgresql_data_dir }}" state=absent
   when: repo.changed or postgresql_redo
 
 - name: Uninstall
@@ -45,6 +48,7 @@
     ./configure
     --prefix={{ postgresql_root | quote }}
     --with-systemd
+    CFLAGS='-O2'
   args:
     chdir: "{{ postgresql_root }}/source"
   when: repo.changed or postgresql_redo
@@ -59,6 +63,10 @@
   make: chdir="{{ postgresql_root }}/source" target=install
   when: repo.changed or postgresql_redo
 
+- name: Install pg_prewarm extension
+  make: chdir="{{ postgresql_root }}/source/contrib/pg_prewarm" target=install
+  when: repo.changed or postgresql_redo
+
 - name: Install the unit file
   template:
     src: postgresql.service.j2
@@ -66,11 +74,16 @@
   register: unit_file
 
 - name: Initialize the database
-  command: "{{ postgresql_root | quote }}/bin/initdb -D {{ postgresql_root | quote }}/data"
+  command: "{{ postgresql_root | quote }}/bin/initdb -D {{ postgresql_data_dir }}"
   when: repo.changed or postgresql_redo
 
-# TODO: Allow user set postgresql.conf to be loaded onto remote
-- name: Restart the PostgreSQL service
+- name: Enable linger for user
+  ansible.builtin.command: "loginctl enable-linger {{ ansible_user_id }}"
+
+- name: Reset connection
+  meta: reset_connection
+
+- name: Start the PostgreSQL service
   systemd:
     daemon_reload: "{{ unit_file.changed }}"
     name: ab-postgresql
@@ -78,4 +91,5 @@
     state: started
 
 - name: Install psycopg2
+  become: yes
   apt: pkg=python3-psycopg2

@@ -1,118 +1,115 @@
 - name: Set up and run fio jobs configured with settings from a script
-  hosts: vm120
+  # hosts: vm120,vm122,vm125,vm126,vm127
+  hosts: vm121
   vars:
     fio_target_directory: /var/lib/autobench
     schedtool: False
     workload_id: 1
-    workload_size: large
+    workload_size: small 
     delete_fio_read_files: 1
-    disk_kernel_rotational: 1
+    disk_kernel_rotational: 0
     nr_hw_queues: 1
-    settings: 5
+    settings: 19
     disk_kernel_io_scheduler: 'mq-deadline'
     disk_kernel_bfq_low_latency: null
     disk_kernel_mqdeadline_fifo_batch: 16
     disk_kernel_mqdeadline_writes_starved: 2
   tasks:
-  - name: Set nr_hw_queues
-    include_role:
-      name: data_disk
-      tasks_from: nr_hw_queues
-    when: nr_hw_queues is defined
-
-  - name: Reset the device for nr_hw_queues value to take effect
-    include_role:
-      name: data_disk
-      tasks_from: reset
-    when: nr_hw_queues is defined
-
-  - name: Install fio
-    become: yes
-    apt: name=fio
-
-  - name: Calculate device settings on the remote
-    script: calc_device_settings3.py
-    args:
-      executable: python3
-      chdir: "{{ fio_target_directory }}"
-    register: output
-
-  - set_fact:
-      calculated_settings: "{{ (output.stdout | from_json) }}"
-
-  - debug:
-      msg: "{{ calculated_settings }}"
-
-  - set_fact:
-      disk_kernel_max_sectors_kb: "{{ calculated_settings.max_sectors_kb }}"
-    when: calculated_settings.max_sectors_kb is defined
-
-  - set_fact:
-      disk_kernel_read_ahead_kb: "{{ calculated_settings.read_ahead_kb }}"
-    when: calculated_settings.read_ahead_kb is defined
-
-  - set_fact:
-      disk_kernel_queue_depth: "{{ calculated_settings.queue_depth }}"
-    when: calculated_settings.queue_depth is defined
-
-  - set_fact:
-      disk_kernel_nr_requests: "{{ calculated_settings.nr_requests }}"
-    when: calculated_settings.nr_requests is defined
-
-  - set_fact:
-      disk_kernel_io_scheduler: "{{ disk_kernel_io_scheduler }}"
-
-  - set_fact:
-      disk_kernel_mqdeadline_fifo_batch: "{{ disk_kernel_mqdeadline_fifo_batch }}"
-    when: disk_kernel_mqdeadline_fifo_batch is defined and disk_kernel_io_scheduler == 'mq-deadline'
-
-  - set_fact:
-      disk_kernel_mqdeadline_writes_starved: "{{ disk_kernel_mqdeadline_writes_starved }}"
-    when: disk_kernel_mqdeadline_writes_starved is defined and disk_kernel_io_scheduler == 'mq-deadline'
-
-  - set_fact:
-      disk_kernel_bfq_low_latency: "{{ disk_kernel_bfq_low_latency }}"
-    when: disk_kernel_bfq_low_latency is defined and disk_kernel_io_scheduler == 'bfq'
-
-  - set_fact:
-      disk_kernel_wbt_lat_usec: "{{ calculated_settings.wbt_lat_usec }}"
-    when: calculated_settings.wbt_lat_usec is defined
-
-  - set_fact:
-      disk_kernel_rotational: "{{ disk_kernel_rotational }}"
-
-  - name: Set kernel device parameters and run fio
+  - name: Prepare the device and VM, calculate the desired settings, run fio, and load output to db
     block:
-      - name: Trim the filesystem
-        include_role:
-          name: data_disk
-          tasks_from: trim
+    - name: Set nr_hw_queues
+      include_role:
+        name: data_disk
+        tasks_from: nr_hw_queues
+      when: nr_hw_queues is defined
 
-      - name: Set kernel device parameters
-        include_role:
-          name: disk_kernel
+    - name: Reset the device for nr_hw_queues value to take effect
+      include_role:
+        name: data_disk
+        tasks_from: reset
+      when: nr_hw_queues is defined
 
-      - name: Run fio jobs
-        vars:
-          fio_result_file: "{{ inventory_hostname }}-{{ settings }}.json"
-        include_role:
-          name: fio
+    - name: Install fio
+      become: yes
+      apt: name=fio
 
-    rescue:
-      - name: Print when errors
-        debug:
-          msg: "Skipping this combination"
+    - name: Calculate device settings on the remote
+      script: calc_device_settings19.py
+      args:
+        executable: python3
+        chdir: "{{ fio_target_directory }}"
+      register: output
 
-  - name: Ensure nr_hw_queues is reset to 0
-    vars:
-      nr_hw_queues: 0
-    include_role:
-      name: data_disk
-      tasks_from: nr_hw_queues
+    - set_fact:
+        calculated_settings: "{{ (output.stdout | from_json) }}"
 
-  - name: Reset the device for nr_hw_queues value to take effect
-    include_role:
-      name: data_disk
-      tasks_from: reset
+    - debug:
+        msg: "{{ calculated_settings }}"
+
+    - set_fact:
+        disk_kernel_max_sectors_kb: "{{ calculated_settings.max_sectors_kb }}"
+      when: calculated_settings.max_sectors_kb is defined
+
+    - set_fact:
+        disk_kernel_read_ahead_kb: "{{ calculated_settings.read_ahead_kb }}"
+      when: calculated_settings.read_ahead_kb is defined
+
+    - set_fact:
+        disk_kernel_queue_depth: "{{ calculated_settings.queue_depth }}"
+      when: calculated_settings.queue_depth is defined
+
+    - set_fact:
+        disk_kernel_nr_requests: "{{ calculated_settings.nr_requests }}"
+      when: calculated_settings.nr_requests is defined
+
+    - set_fact:
+        disk_kernel_io_scheduler: "{{ disk_kernel_io_scheduler }}"
+
+    - set_fact:
+        disk_kernel_mqdeadline_fifo_batch: "{{ disk_kernel_mqdeadline_fifo_batch }}"
+      when: disk_kernel_mqdeadline_fifo_batch is defined and disk_kernel_io_scheduler == 'mq-deadline'
+
+    - set_fact:
+        disk_kernel_mqdeadline_writes_starved: "{{ disk_kernel_mqdeadline_writes_starved }}"
+      when: disk_kernel_mqdeadline_writes_starved is defined and disk_kernel_io_scheduler == 'mq-deadline'
+
+    - set_fact:
+        disk_kernel_bfq_low_latency: "{{ disk_kernel_bfq_low_latency }}"
+      when: disk_kernel_bfq_low_latency is defined and disk_kernel_io_scheduler == 'bfq'
+
+    - set_fact:
+        disk_kernel_wbt_lat_usec: "{{ calculated_settings.wbt_lat_usec }}"
+      when: calculated_settings.wbt_lat_usec is defined
+
+    - set_fact:
+        disk_kernel_rotational: "{{ disk_kernel_rotational }}"
+
+    - name: Trim the filesystem
+      include_role:
+        name: data_disk
+        tasks_from: trim
+
+    - name: Set kernel device parameters
+      include_role:
+        name: disk_kernel
+
+    - name: Run fio jobs
+      vars:
+        fio_result_file: "{{ inventory_hostname }}-{{ settings }}.json"
+      include_role:
+        name: fio
+
+    always:
+    - name: Ensure nr_hw_queues is reset to 0
+      vars:
+        nr_hw_queues: 0
+      include_role:
+        name: data_disk
+        tasks_from: nr_hw_queues
+
+    - name: Reset the device for nr_hw_queues value to take effect
+      include_role:
+        name: data_disk
+        tasks_from: reset
 
 # vim: set ft=yaml.ansible:
