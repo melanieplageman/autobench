@@ -1,0 +1,1 @@
+fio_ncpu: "{{ hostvars[inventory_hostname]['vm_instance_info']['specs']['ncpu'] | int }}"

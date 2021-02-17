@@ -15,3 +15,8 @@ baseline_settings*json
 */.ipynb_checkpoints/*
 
 ipython_config.py
+
+tags.lock
+tags.temp
+
+hosts

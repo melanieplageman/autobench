@@ -1,0 +1,2 @@
+# This converts GiB to bytes
+kernel_memory_bytes: "{{ (hostvars[inventory_hostname]['vm_instance_info']['specs']['memory_GiB']) * 1024 * 1024 * 1024 }}"

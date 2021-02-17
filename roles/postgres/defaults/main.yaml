@@ -1,9 +1,13 @@
 # Location of the git repository to clone to acquire the PostgreSQL source code
-postgresql_repo: https://github.com/melanieplageman/postgres.git
+#postgresql_repo: https://github.com/melanieplageman/postgres.git
+postgresql_repo: https://github.com/postgres/postgres.git
 
 # The git revision (branch, tag, or commit) to compile PostgreSQL from
-postgresql_revision: parallel_foj_roj_no_deadlock_m2B
+#postgresql_revision: parallel_foj_roj_no_deadlock_m2B
+postgresql_revision: REL_15_STABLE
 
 # Whether to recompile, reinstall, and reinitialize PostgreSQL if it's already
 # done
 postgresql_redo: no
+
+postgresql_data_dir: "{{ postgresql_root | quote }}/data"

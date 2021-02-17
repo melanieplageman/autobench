@@ -1,8 +1,0 @@
-- name: Reset device
-  hosts: vm122
-  tasks:
-  - name: Unbind and re-bind driver to device
-    import_role:
-      name: data_disk
-      tasks_from: reset
-

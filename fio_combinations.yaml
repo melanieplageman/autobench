@@ -65,22 +65,27 @@
       ]) | map("combine") | product([
 
         { "disk_kernel_nr_requests": 256 },
+        { "disk_kernel_nr_requests": 50 },
 
       ]) | map("combine") | product([
 
         { "disk_kernel_rotational": 1 },
+        { "disk_kernel_rotational": 0 },
 
       ]) | map("combine") | product([
 
         { "disk_kernel_io_scheduler": "mq-deadline" },
+        { "disk_kernel_io_scheduler": "none" },
 
       ]) | map("combine") | product([
 
         { "disk_kernel_mqdeadline_fifo_batch": 16 },
+        { "disk_kernel_mqdeadline_fifo_batch": 1 },
 
       ]) | map("combine") | product([
 
         { "disk_kernel_mqdeadline_writes_starved": 2 },
+        { "disk_kernel_mqdeadline_writes_starved": 1 },
 
       ]) | map("combine") | product([
 

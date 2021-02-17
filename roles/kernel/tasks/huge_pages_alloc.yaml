@@ -1,0 +1,11 @@
+- debug:
+    msg: "Attempting to allocate {{ needed_hugepages }} huge pages."
+
+- name: Calculate and allocate most of memory to be huge pages
+  become: yes
+  ansible.posix.sysctl:
+    name: vm.nr_hugepages
+    value: "{{ needed_hugepages | string }}"
+    state: present
+
+# vim: set ft=yaml.ansible:

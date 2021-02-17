@@ -1,5 +1,5 @@
 #! /bin/bash
 
-bus_id=$(udevadm info --query=property -x --name {{ vm_data_disk_specs['device'] | quote }} | grep DEVPATH= | awk -F/ '{ printf "%s", $8 }')
+bus_id=$(udevadm info --query=property -x --name {{ vm_data_disk_specs['device'] | quote }} | grep DEVPATH= | awk -F/ '{ printf "%s", $7 }')
 echo "\"$bus_id\""
 

@@ -1,0 +1,6 @@
+- name: Stop the PostgreSQL service
+  systemd:
+    name: ab-postgresql
+    scope: user
+    state: stopped
+  failed_when: false

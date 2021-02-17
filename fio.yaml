@@ -8,100 +8,96 @@
     nr_hw_queues: 1
     delete_fio_read_files: 1
   tasks:
-  - name: Set nr_hw_queues
-    include_role:
-      name: data_disk
-      tasks_from: nr_hw_queues
-    when: nr_hw_queues is defined
-
-  - name: Reset the device for nr_hw_queues value to take effect
-    include_role:
-      name: data_disk
-      tasks_from: reset
-    when: nr_hw_queues is defined
-
-  - set_fact:
-      host_instance_disk: "{{ hostvars[inventory_hostname]['vm_instance_info']['specs']['instance_type'] }}_{{ hostvars[inventory_hostname]['vm_data_disk_specs']['size_gb'] }}"
-
-  - name: Lookup my settings
-    set_fact:
-      settings: "{{ (lookup('file', settings + '.json') | from_json).get(host_instance_disk) }}"
-
-  - debug:
-      msg: "{{ settings }}"
-
-  - set_fact:
-      disk_kernel_max_sectors_kb: "{{ settings.disk_kernel_max_sectors_kb }}"
-    when: settings.disk_kernel_max_sectors_kb is defined
-
-  - set_fact:
-      disk_kernel_read_ahead_kb: "{{ settings.disk_kernel_read_ahead_kb }}"
-    when: settings.disk_kernel_read_ahead_kb is defined
-
-  - set_fact:
-      disk_kernel_queue_depth: "{{ settings.disk_kernel_queue_depth }}"
-    when: settings.disk_kernel_queue_depth is defined
-
-  - set_fact:
-      disk_kernel_nr_requests: "{{ settings.disk_kernel_nr_requests }}"
-    when: settings.disk_kernel_nr_requests is defined
-
-  - set_fact:
-      disk_kernel_io_scheduler: "{{ settings.disk_kernel_io_scheduler }}"
-    when: settings.disk_kernel_io_scheduler is defined
-
-  - set_fact:
-      disk_kernel_mqdeadline_fifo_batch: "{{ settings.disk_kernel_mqdeadline_fifo_batch }}"
-    when: settings.disk_kernel_mqdeadline_fifo_batch is defined and settings.disk_kernel_io_scheduler == 'mq-deadline'
-
-  - set_fact:
-      disk_kernel_mqdeadline_writes_starved: "{{ settings.disk_kernel_mqdeadline_writes_starved }}"
-    when: settings.disk_kernel_mqdeadline_writes_starved is defined and settings.disk_kernel_io_scheduler == 'mq-deadline'
-
-  - set_fact:
-      disk_kernel_bfq_low_latency: "{{ settings.disk_kernel_bfq_low_latency }}"
-    when: settings.disk_kernel_bfq_low_latency is defined and settings.disk_kernel_io_scheduler == 'bfq'
-
-  - set_fact:
-      disk_kernel_wbt_lat_usec: "{{ settings.disk_kernel_wbt_lat_usec }}"
-    when: settings.disk_kernel_wbt_lat_usec is defined
-
-  - set_fact:
-      disk_kernel_rotational: "{{ settings.disk_kernel_rotational }}"
-    when: settings.disk_kernel_rotational is defined
-
-  - name: Set kernel device parameters and run fio
+  - name: Prepare the device and VM, set the specified settings, run fio, and load output to db
     block:
-      - name: Trim the filesystem
-        include_role:
-          name: data_disk
-          tasks_from: trim
+    - name: Set nr_hw_queues
+      include_role:
+        name: data_disk
+        tasks_from: nr_hw_queues
+      when: nr_hw_queues is defined
 
-      - name: Set kernel device parameters
-        include_role:
-          name: disk_kernel
+    - name: Reset the device for nr_hw_queues value to take effect
+      include_role:
+        name: data_disk
+        tasks_from: reset
+      when: nr_hw_queues is defined
 
-      - name: Run fio jobs
-        vars:
-          fio_result_file: "{{ inventory_hostname }}-{{ settings }}.json"
-        include_role:
-          name: fio
+    - set_fact:
+        host_instance_disk: "{{ hostvars[inventory_hostname]['vm_instance_info']['specs']['instance_type'] }}_{{ hostvars[inventory_hostname]['vm_data_disk_specs']['size_gb'] }}"
 
-    rescue:
-      - name: Print when errors
-        debug:
-          msg: "Skipping this combination"
+    - name: Lookup my settings
+      set_fact:
+        settings: "{{ (lookup('file', settings + '.json') | from_json).get(host_instance_disk) }}"
 
-  - name: Ensure nr_hw_queues is reset to 0
-    vars:
-      nr_hw_queues: 0
-    include_role:
-      name: data_disk
-      tasks_from: nr_hw_queues
+    - debug:
+        msg: "{{ settings }}"
 
-  - name: Reset the device for nr_hw_queues value to take effect
-    include_role:
-      name: data_disk
-      tasks_from: reset
+    - set_fact:
+        disk_kernel_max_sectors_kb: "{{ settings.disk_kernel_max_sectors_kb }}"
+      when: settings.disk_kernel_max_sectors_kb is defined
+
+    - set_fact:
+        disk_kernel_read_ahead_kb: "{{ settings.disk_kernel_read_ahead_kb }}"
+      when: settings.disk_kernel_read_ahead_kb is defined
+
+    - set_fact:
+        disk_kernel_queue_depth: "{{ settings.disk_kernel_queue_depth }}"
+      when: settings.disk_kernel_queue_depth is defined
+
+    - set_fact:
+        disk_kernel_nr_requests: "{{ settings.disk_kernel_nr_requests }}"
+      when: settings.disk_kernel_nr_requests is defined
+
+    - set_fact:
+        disk_kernel_io_scheduler: "{{ settings.disk_kernel_io_scheduler }}"
+      when: settings.disk_kernel_io_scheduler is defined
+
+    - set_fact:
+        disk_kernel_mqdeadline_fifo_batch: "{{ settings.disk_kernel_mqdeadline_fifo_batch }}"
+      when: settings.disk_kernel_mqdeadline_fifo_batch is defined and settings.disk_kernel_io_scheduler == 'mq-deadline'
+
+    - set_fact:
+        disk_kernel_mqdeadline_writes_starved: "{{ settings.disk_kernel_mqdeadline_writes_starved }}"
+      when: settings.disk_kernel_mqdeadline_writes_starved is defined and settings.disk_kernel_io_scheduler == 'mq-deadline'
+
+    - set_fact:
+        disk_kernel_bfq_low_latency: "{{ settings.disk_kernel_bfq_low_latency }}"
+      when: settings.disk_kernel_bfq_low_latency is defined and settings.disk_kernel_io_scheduler == 'bfq'
+
+    - set_fact:
+        disk_kernel_wbt_lat_usec: "{{ settings.disk_kernel_wbt_lat_usec }}"
+      when: settings.disk_kernel_wbt_lat_usec is defined
+
+    - set_fact:
+        disk_kernel_rotational: "{{ settings.disk_kernel_rotational }}"
+      when: settings.disk_kernel_rotational is defined
+
+    - name: Trim the filesystem
+      include_role:
+        name: data_disk
+        tasks_from: trim
+
+    - name: Set kernel device parameters
+      include_role:
+        name: disk_kernel
+
+    - name: Run fio jobs
+      vars:
+        fio_result_file: "{{ inventory_hostname }}-{{ settings }}.json"
+      include_role:
+        name: fio
+
+    always:
+    - name: Ensure nr_hw_queues is reset to 0
+      vars:
+        nr_hw_queues: 0
+      include_role:
+        name: data_disk
+        tasks_from: nr_hw_queues
+
+    - name: Reset the device for nr_hw_queues value to take effect
+      include_role:
+        name: data_disk
+        tasks_from: reset
 
 # vim: set ft=yaml.ansible:

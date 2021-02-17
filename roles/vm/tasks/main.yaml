@@ -81,6 +81,8 @@
     name: "pip-vm-{{ vm_suffix }}-001"
     resource_group: "{{ resource_group.state.name }}"
     allocation_method: static
+    # This is required for ultradisk
+    # zones: [1]
   register: vm_public_ip_address
 
 - name: Create a Network Interface
@@ -90,6 +92,7 @@
     virtual_network: "{{ virtual_network.state.name }}"
     security_group: "{{ security_group.state.name }}"
     subnet_name: "{{ vm_subnet.state.name }}"
+    enable_accelerated_networking: True
     ip_configurations:
     - name: "nic-ipconfig-{{ vm_suffix }}-001"
       public_ip_address_name: "{{ vm_public_ip_address.state.name }}"
@@ -122,14 +125,17 @@
     #   enabled: yes
     #   storage_account: "{{ storage_account.state.name }}"
     managed_disk_type: Premium_LRS
+    os_disk_caching: "{{ data_disk_caching_policy }}"
     image:
-      offer: debian-10
-      publisher: Debian
-      sku: 10
+      offer: '0001-com-ubuntu-server-kinetic-daily'
+      publisher: Canonical
+      sku: 22_10-daily-gen2
       version: latest
     ssh_public_keys:
     - path: "/home/{{ ansible_user_id }}/.ssh/authorized_keys"
       key_data: "{{ keypair.public_key }}"
+      # This is required for ultradisk
+    # zones: [1]
   register: vm
 
 # Docs are incorrect. You must access the properties as vm['ansible_facts']
@@ -158,15 +164,16 @@
 # until then, need to manually attach the disk
 - name: Create a Data Disk
   azure_rm_manageddisk:
-    name: "dd-{{ vm_suffix }}"
+    name: "dd-{{ vm_suffix }}-{{ lun | string }}"
     resource_group: "{{ resource_group.state.name }}"
     create_option: empty
+    # storage_account_type: UltraSSD_LRS
     storage_account_type: Premium_LRS
     os_type: linux
-    attach_caching: ''
     disk_size_gb: "{{ vm_disk_size_gb }}"
+    # zone: 1
     tags:
-      Size: "{{ vm_disk_size_gb | string}}"
+      Size: "{{ vm_disk_size_gb | string}}-{{ lun | string }}"
   register: dd
 
 - name: print data disk info
@@ -180,21 +187,22 @@
 # This is unfortunate but unavoidable due to the bug.
 # It will error out if the disk is already attached, however, it will not cause
 # playbook execution to fail (because of the `failed_when` condition) If you
-# have to run this playbook when you have already attached a disk at lun 1, run
+# have to run this playbook when you have already attached a disk at the specified lun, run
 # the playbook with --skip_tags="disk-attach" (or detach the disk)
 - name: Attach the Data Disk to the VM
   command: >
     az vm disk attach
     -g "{{ vm_resource_group_name | quote }}"
     --vm-name "vm-{{ vm_suffix | quote }}"
-    --name "dd-{{ vm_suffix | quote }}"
-    --lun 1
+    --name "dd-{{ vm_suffix | quote }}-{{ lun | string }}"
+    --lun "{{ lun }}"
+    --caching "{{ data_disk_caching_policy }}"
   failed_when: "False"
   tags: disk-attach
 
 - name: Print Azure VM disk device
   debug:
-    msg: "Azure VM disk attached. Use '/dev/disk/azure/scsi1/lun1' for device name in future tasks requiring device name"
+    msg: "Azure VM disk attached. Use '/dev/disk/azure/scsi1/lun{{ lun }}' for device name in future tasks requiring device name"
 
 - name: Create a host vars directory
   file:

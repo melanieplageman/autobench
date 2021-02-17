@@ -4,8 +4,10 @@ Documentation=man:postgres(1)
 
 [Service]
 Type=notify
-ExecStart={{ postgresql_root }}/bin/postgres -D {{ postgresql_root }}/data -c listen_addresses= -c unix_socket_directories={{ postgresql_root }}
+ExecStart={{ postgresql_root }}/bin/postgres -D {{ postgresql_data_dir }} -c listen_addresses= -c unix_socket_directories={{ postgresql_root }}
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 KillSignal=SIGINT
 TimeoutSec=0
+StandardOutput=file:/tmp/pg_log
+StandardError=file:/tmp/pg_log

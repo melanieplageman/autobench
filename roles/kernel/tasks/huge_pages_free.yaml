@@ -1,0 +1,7 @@
+- name: Turn huge pages off
+  become: yes
+  ansible.posix.sysctl:
+    name: vm.nr_hugepages
+    state: absent
+
+# vim: set ft=yaml.ansible:

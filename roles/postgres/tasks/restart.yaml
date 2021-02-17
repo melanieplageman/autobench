@@ -1,0 +1,6 @@
+- name: Restart the PostgreSQL service
+  systemd:
+    daemon_reload: yes
+    name: ab-postgresql
+    scope: user
+    state: restarted
