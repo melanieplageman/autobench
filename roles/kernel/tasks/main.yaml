@@ -22,4 +22,9 @@
     var: ansible_facts['kernel']
   when: rebooted is not skipped
 
+- name: Add the bfq module
+  become: yes
+  community.general.modprobe:
+    name: bfq
+
 # vim: set ft=yaml.ansible:

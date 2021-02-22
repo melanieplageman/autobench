@@ -67,7 +67,23 @@
 
       ]) | map("combine") | product([
 
+        { "disk_kernel_rotational": 1 },
+
+      ]) | map("combine") | product([
+
         { "disk_kernel_io_scheduler": "mq-deadline" },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_mqdeadline_fifo_batch": 16 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_mqdeadline_writes_starved": 2 },
+
+      ]) | map("combine") | product([
+
+        { "disk_kernel_bfq_low_latency": "" },
 
       ]) | map("combine") }}
 

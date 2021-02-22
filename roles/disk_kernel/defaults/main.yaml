@@ -2,6 +2,22 @@
 # VMs.
 disk_kernel_io_scheduler: none
 
+# Will set /...device.../queue/iosched/writes_starved
+# This parameter is only present when mq-deadline is set as the IO scheduler
+# writes_starved current default is 2
+disk_kernel_mqdeadline_writes_starved: 2
+
+# Will set /...device.../queue/iosched/fifo_batch
+# This parameter is only present when mq-deadline is set as the IO scheduler
+# fifo_batch current default is 16
+disk_kernel_mqdeadline_fifo_batch: 16
+
+# Will set /...device.../queue/iosched/low_latency
+# This parameter is only present when bfq is set as the IO scheduler
+# low_latency current default is 1
+# bfq scheduler is not loaded by default
+disk_kernel_bfq_low_latency: 1
+
 # Will set /...device.../queue/nr_requests
 disk_kernel_nr_requests: 128
 
@@ -17,3 +33,7 @@ disk_kernel_queue_depth: 64
 
 # Will set /...device.../queue/wbt_lat_usec to 0 (disabled)
 disk_kernel_wbt_lat_usec: 0
+
+# Will set /...device.../queue/rotational
+# Current default is 1 (true)
+disk_kernel_rotational: 1

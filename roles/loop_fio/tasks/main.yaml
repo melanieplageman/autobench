@@ -18,12 +18,28 @@
   when: item.disk_kernel_nr_requests is defined
 
 - set_fact:
+    disk_kernel_wbt_lat_usec: "{{ item.disk_kernel_wbt_lat_usec }}"
+  when: item.disk_kernel_wbt_lat_usec is defined
+
+- set_fact:
+    disk_kernel_rotational: "{{ item.disk_kernel_rotational }}"
+  when: item.disk_kernel_rotational is defined
+
+- set_fact:
     disk_kernel_io_scheduler: "{{ item.disk_kernel_io_scheduler }}"
   when: item.disk_kernel_io_scheduler
 
 - set_fact:
-    disk_kernel_wbt_lat_usec: "{{ item.disk_kernel_wbt_lat_usec }}"
-  when: item.disk_kernel_wbt_lat_usec is defined
+    disk_kernel_mqdeadline_fifo_batch: "{{ item.disk_kernel_mqdeadline_fifo_batch }}"
+  when: item.disk_kernel_mqdeadline_fifo_batch
+
+- set_fact:
+    disk_kernel_mqdeadline_writes_starved: "{{ item.disk_kernel_mqdeadline_writes_starved }}"
+  when: item.disk_kernel_mqdeadline_writes_starved
+
+- set_fact:
+    disk_kernel_bfq_low_latency: "{{ item.disk_kernel_bfq_low_latency }}"
+  when: item.disk_kernel_bfq_low_latency
 
 - name: Set kernel device parameters and run fio
   block:

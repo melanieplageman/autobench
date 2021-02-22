@@ -58,6 +58,10 @@
     dest: "{{ fio_results_directory }}"
     flat: yes
 
+# Ensure that Ansible's DEFAULT_JINJA2_NATIVE configuration is used
+# https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-jinja2-native
+# Otherwise, the INSERT will fail due to one of the io scheduler configuration values being undefined
+
 # This step only works if the database schema has already been loaded
 - name: Insert run settings and fio results to database
   community.general.postgresql_query:
@@ -70,21 +74,31 @@
       INSERT INTO run (
       schedtool,
       workload_id,
-      disk_id, disk_device, vm_id,
+      disk_id,
+      disk_device,
+      vm_id,
       kernel_nr_requests, kernel_max_sectors_kb,
       kernel_read_ahead_kb, kernel_queue_depth,
-      kernel_wbt_lat_usec, kernel_io_scheduler,
+      kernel_wbt_lat_usec, kernel_rotational,
+      kernel_io_scheduler,
+      kernel_mqdeadline_fifo_batch, kernel_mqdeadline_writes_starved,
+      kernel_bfq_low_latency,
       data
       )
-      SELECT
+      VALUES (
         %(schedtool)s,
         %(workload_id)s,
-        (SELECT id FROM disk WHERE disk.size_gb = %(disk_size_gb)s) AS disk_id,
+        (SELECT id FROM disk WHERE disk.size_gb = %(disk_size_gb)s),
         %(disk_device)s,
-        (SELECT id FROM vm WHERE vm.instance_type = %(vm_instance_type)s) AS vm_id,
-        %(kernel_nr_requests)s, %(kernel_max_sectors_kb)s, %(kernel_read_ahead_kb)s,
-        %(kernel_queue_depth)s, %(kernel_wbt_lat_usec)s, %(kernel_io_scheduler)s,
+        (SELECT id FROM vm WHERE vm.instance_type = %(vm_instance_type)s),
+        %(kernel_nr_requests)s, %(kernel_max_sectors_kb)s,
+        %(kernel_read_ahead_kb)s, %(kernel_queue_depth)s,
+        %(kernel_wbt_lat_usec)s, %(kernel_rotational)s,
+        %(kernel_io_scheduler)s,
+        %(kernel_mqdeadline_fifo_batch)s, %(kernel_mqdeadline_writes_starved)s,
+        %(kernel_bfq_low_latency)s,
         %(data)s
+      )
     named_args:
       schedtool: "{{ schedtool }}"
       workload_id: "{{ workload_id }}"
@@ -96,7 +110,11 @@
       kernel_read_ahead_kb: "{{ disk_kernel_read_ahead_kb }}"
       kernel_queue_depth: "{{ disk_kernel_queue_depth }}"
       kernel_wbt_lat_usec: "{{ disk_kernel_wbt_lat_usec }}"
+      kernel_rotational: "{{ disk_kernel_rotational }}"
       kernel_io_scheduler: "{{ disk_kernel_io_scheduler }}"
+      kernel_mqdeadline_fifo_batch: "{{ disk_kernel_mqdeadline_fifo_batch if (disk_kernel_mqdeadline_fifo_batch is defined) else none | default(none) }}"
+      kernel_mqdeadline_writes_starved: "{{ disk_kernel_mqdeadline_writes_starved if (disk_kernel_mqdeadline_writes_starved is defined) else none | default(none) }}"
+      kernel_bfq_low_latency: "{{ disk_kernel_bfq_low_latency if (disk_kernel_bfq_low_latency is defined) else none | default(none) }}"
       data: "{{ lookup('file', (fio_results_directory, fio_result_file) | path_join) | string }}"
   delegate_to: localhost
 

@@ -49,6 +49,32 @@ CREATE TABLE IF NOT EXISTS run (
   kernel_queue_depth    INTEGER NOT NULL,
   kernel_io_scheduler   TEXT NOT NULL,
   kernel_wbt_lat_usec   INTEGER NOT NULL,
+  kernel_rotational     INTEGER NOT NULL,
+
+  kernel_mqdeadline_fifo_batch     INTEGER,
+  kernel_mqdeadline_writes_starved INTEGER,
+  kernel_bfq_low_latency            INTEGER,
+  CONSTRAINT
+  kernel_io_scheduler_configuration CHECK (
+    (
+      kernel_io_scheduler = 'mq-deadline' AND
+      kernel_bfq_low_latency IS NULL AND
+      kernel_mqdeadline_fifo_batch IS NOT NULL AND
+      kernel_mqdeadline_writes_starved IS NOT NULL
+    ) OR
+    (
+      kernel_io_scheduler = 'bfq' AND
+      kernel_bfq_low_latency IS NOT NULL AND
+      kernel_mqdeadline_fifo_batch IS NULL AND
+      kernel_mqdeadline_writes_starved IS NULL
+    ) OR
+    (
+      kernel_io_scheduler = 'none' AND
+      kernel_bfq_low_latency IS NULL AND
+      kernel_mqdeadline_fifo_batch IS NULL AND
+      kernel_mqdeadline_writes_starved IS NULL
+    )
+  ),
 
   data JSONB NOT NULL,
   PRIMARY KEY(id)

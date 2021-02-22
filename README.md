@@ -59,9 +59,9 @@ The intent of the first way of running fio (with `fio.yaml`) is to run specific 
 First create a CSV with the following fields:
 
 ```
-vm_instance_type,vm_cpus,disk_size_gb,vm_disk,disk_kernel_max_sectors_kb,disk_kernel_queue_depth,disk_kernel_read_ahead_kb,disk_kernel_nr_requests,disk_kernel_wbt_lat_usec,disk_kernel_io_scheduler
-Standard_F2s_v2,2,4,Standard_F2s_v2_4,20,10,140,10,0,mq-deadline
-Standard_F8s_v2,8,4,Standard_F8s_v2_4,65,11,520,11,0,mq-deadline
+vm_instance_type,vm_cpus,disk_size_gb,vm_disk,disk_kernel_rotational,disk_kernel_max_sectors_kb,disk_kernel_queue_depth,disk_kernel_read_ahead_kb,disk_kernel_nr_requests,disk_kernel_wbt_lat_usec,disk_kernel_io_scheduler,disk_kernel_mq-deadline_fifo_batch,disk_kernel_mq-deadline_writes_starved,disk_kernel_bfq_low_latency
+Standard_F2s_v2,2,4,Standard_F2s_v2_4,1,20,10,140,10,0,mq-deadline,16,2,NULL
+Standard_F8s_v2,8,4,Standard_F8s_v2_4,1,65,11,520,11,0,bfq,NULL,NULL,1
 ```
 
 Then modify the included `load.py` script to point to the location of the CSV and run `load.py`. This will create a JSON file (if you specify `to_file=True`) which will be used in `fio.yaml`.
