@@ -44,6 +44,7 @@
   filesystem:
     fstype: ext4
     dev: "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+    opts: "-E lazy_itable_init=0,lazy_journal_init=0"
     force: yes
 
 - name: Given formatted disk partition information, get UUID

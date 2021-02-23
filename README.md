@@ -191,7 +191,7 @@ This directory houses most of the tasks for all of the plays in this project.
   - `defaults` contain parameters that the user may want to set
   - `tasks`
     - `main.yaml` partitions, formats, and mounts a data disk on the target host
-    - `reset.yaml` trims the file system and is meant to be used between write-heavy benchmarking runs
+    - `trim.yaml` trims the file system and is meant to be used between write-heavy benchmarking runs
     - `teardown.yaml` unmounts the file system
   - `templates` contain templates for host vars to be set on the target hosts
 - `fio` role:

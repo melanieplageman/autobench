@@ -523,3 +523,10 @@
   - name: Mount and Format the disk
     import_role:
       name: data_disk
+
+  - name: Trim the filesystem
+    include_role:
+      name: data_disk
+      tasks_from: trim
+
+# vim: set ft=yaml.ansible:

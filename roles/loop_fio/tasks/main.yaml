@@ -43,10 +43,10 @@
 
 - name: Set kernel device parameters and run fio
   block:
-    - name: Format and trim the disk
+    - name: Trim the filesystem
       include_role:
         name: data_disk
-        tasks_from: reset
+        tasks_from: trim
 
     - name: Set kernel device parameters
       include_role:
