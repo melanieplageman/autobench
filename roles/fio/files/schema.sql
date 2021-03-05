@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS run (
 
   schedtool BOOLEAN DEFAULT FALSE,
 
+  settings INTEGER NOT NULL,
+
   workload_id INTEGER NOT NULL,
 
   disk_id INTEGER NOT NULL REFERENCES disk(id),

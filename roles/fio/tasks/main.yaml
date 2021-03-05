@@ -73,6 +73,7 @@
     query: >
       INSERT INTO run (
       schedtool,
+      settings,
       workload_id,
       disk_id,
       disk_device,
@@ -87,6 +88,7 @@
       )
       VALUES (
         %(schedtool)s,
+        %(settings)s,
         %(workload_id)s,
         (SELECT id FROM disk WHERE disk.size_gb = %(disk_size_gb)s),
         %(disk_device)s,
@@ -101,6 +103,7 @@
       )
     named_args:
       schedtool: "{{ schedtool }}"
+      settings: "{{ settings }}"
       workload_id: "{{ workload_id }}"
       disk_size_gb: "{{ hostvars[inventory_hostname]['vm_data_disk_specs']['size_gb'] }}"
       disk_device: "{{ hostvars[inventory_hostname]['vm_data_disk_specs']['device'] }}"

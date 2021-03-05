@@ -12,7 +12,7 @@
 
   - name: Lookup my settings
     set_fact:
-      settings: "{{ (lookup('file', ideal_settings + '.json') | from_json).get(host_instance_disk) }}"
+      settings: "{{ (lookup('file', settings + '.json') | from_json).get(host_instance_disk) }}"
 
   - debug:
       msg: "{{ settings }}"
@@ -70,7 +70,7 @@
 
       - name: Run fio jobs
         vars:
-          fio_result_file: "{{ inventory_hostname }}-{{ ideal_settings }}.json"
+          fio_result_file: "{{ inventory_hostname }}-{{ settings }}.json"
         include_role:
           name: fio
 
