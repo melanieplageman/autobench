@@ -4,7 +4,7 @@
     schedtool: False
     workload_id: 1
     workload_size: large
-    ideal_settings: settings-1
+    settings: 6
     delete_fio_read_files: 1
   tasks:
   - set_fact:

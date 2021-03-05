@@ -44,13 +44,15 @@ If this is the first time you are running site.yaml, you may want to comment out
 
 Results from running fio jobs are stored in a Postgres database. Before running fio jobs, create the Postgres results database, and run `roles/fio/files/schema.sql` to create the tables used for fio results. 
 
-Once the fio results database is set up, provide the database connection information either by altering `roles/fio/defaults/main.yaml` or by providing these parameters as extra vars to the `ansible-playbook` command when running `fio.yaml` or `fio_combinations.yaml`. 
+Once the fio results database is set up, provide the database connection information either by altering `roles/fio/defaults/main.yaml` or by providing these parameters as extra vars to the `ansible-playbook` command when running `fio.yaml`, `fio_combinations.yaml`, or `fio_auto.yaml`.
 
 The fio plays are meant to test the effect of different block device settings on overall performance of a given VM with a given disk.
 
-As such, both `fio.yaml` and `fio_combinations.yaml` will leverage the `disk_kernel` role which sets these settings.
+As such, `fio.yaml`, `fio_combinations.yaml`, and `fio_auto.yaml` all leverage the `disk_kernel` role which sets these settings.
 
-There are two ways to run fio jobs on VMs in autobench.
+To change which kernel parameters are under test, you will also need to add code to set the new parameter in the `disk_kernel` role and add this setting to the `run` table in the `fio` role, both in the `run` table schema in `roles/fio/files/schema.sql` and the `INSERT` statement in the "Insert run settings and fio results to database" task in `roles/fio/tasks.main.yaml`.
+
+There are three ways to run fio jobs on VMs in autobench:
 
 ### Method 1
 
@@ -73,13 +75,13 @@ Next you should update `fio.yaml` `vars`:
 
 `workload_id` refers to the workload you wish to run. Workloads are added in `roles/fio/templates/workloads/` and should follow the naming convention `[workload_id]_[size].j2` where size must match the size specified in `fio.yaml` under `vars` and called `workload_size`.
 
-`ideal_settings` should be set to the basename of the JSON settings file you created and put in the top-level autobench directory in the above step.
+`settings` should be set to a number identifying the JSON settings file you created and put in the top-level autobench directory in the above step.
 
 `delete_fio_read_files` determines whether or not the files created by fio for read jobs are deleted after each run. Reusing the files makes it faster to do multiple runs, but, if you are running multiple different workloads on the VM, you may run out of disk space, so setting this to `1` may be desirable.
 
 Assuming you have already provisioned VMs and updated the inventory, you may now run `fio.yaml`. The results will be populated in the specified results database.
 
-Set the number of [forks](https://docs.ansible.com/ansible/latest/user_guide/playbooks_strategies.html#setting-the-number-of-forks) to leverage parallelism. 
+Set the number of [forks](https://docs.ansible.com/ansible/latest/user_guide/playbooks_strategies.html#setting-the-number-of-forks) to leverage parallelism.
 
 ```sh
 ansible-playbook fio.yaml -e "privatekey=PRIVATE_KEY_FILE"
@@ -87,7 +89,28 @@ ansible-playbook fio.yaml -e "privatekey=PRIVATE_KEY_FILE"
 
 ### Method 2
 
-The second way to run fio is to run `fio_combinations.yaml`. The intent of this method is to explore the relationship between different combinations of block device settings. It is easier to use and can also be used to run a single fio job on a single host by editing the combinations down to one setting for each `product()` call.
+The second way to run fio is to run `fio_auto.yaml`. This play allows you to run a script to determine the ideal settings.
+
+The task, `Calculate device settings on the remote`, should be updated to point to a script which will calculate these settings. The script should print to stdout a JSON-encoded string with the block device settings which should be set. Mind the naming conventions here (the settings are not prefixed with the role).
+
+Any settings which you would like to set but which are not calculated by the script should be specified in the top `vars` section of this file.
+
+`schedtool` should remain `False` unless you have also updated the task "Run fio jobs" in `roles/fio/tasks/main.yaml` to use Schedtool.
+
+`workload_id` refers to the workload you wish to run. Workloads are added in `roles/fio/templates/workloads/` and should follow the naming convention `[workload_id]_[size].j2` where size must match the size specified in `fio.yaml` under `vars` and called `workload_size`.
+
+The var `settings` should be set to a number identifying the formula used to calculate the settings or the settings used.
+
+Assuming you have already provisioned VMs and updated the inventory, you may now run `fio_auto.yaml`. The results will be populated in the specified results database.
+
+Set the number of [forks](https://docs.ansible.com/ansible/latest/user_guide/playbooks_strategies.html#setting-the-number-of-forks) to leverage parallelism.
+
+```sh
+ansible-playbook fio_auto.yaml -e "privatekey=PRIVATE_KEY_FILE"
+
+### Method 3
+
+The third way to run fio is to run `fio_combinations.yaml`. The intent of this method is to explore the relationship between different combinations of block device settings. It is easier to use and can also be used to run a single fio job on a single host by editing the combinations down to one setting for each `product()` call.
 
 To run one or more fio jobs, edit the `fio_job_file` var in `fio_combinations.yaml`. 
 Note that you should confirm that the `filesize` fio job parameters are appropriate for the disk size under test.
@@ -95,13 +118,12 @@ Note that you should confirm that the `filesize` fio job parameters are appropri
 To change the existing kernel parameters' values, edit the `fio_loop_agenda` var in `fio.yaml`.
 The `loop_fio` role included in `fio_combinations.yaml` will run every combination of the settings specified in the `fio_loop_agenda` var.
 
-To change which kernel parameters are under test, you will also need to add code to set the new parameter in the `disk_kernel` role and add this setting to the `run` table in the `fio` role, both in the `run` table schema in `roles/fio/files/schema.sql` and the `INSERT` statement in the "Insert run settings and fio results to database" task in `roles/fio/tasks.main.yaml`.
-
 Assuming you have already provisioned VMs and updated the inventory, you may now run `fio_combinations.yaml`. The results will be populated in the specified results database.
 
 ```sh
 ansible-playbook fio_combinations.yaml -e "privatekey=PRIVATE_KEY_FILE"
 ```
+
 
 ## Running TPC-DS
 To run the TPC-DS benchmark on a certain revision of Postgres:

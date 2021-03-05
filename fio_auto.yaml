@@ -1,0 +1,89 @@
+- name: Test out running a script on a remote
+  hosts: vm122
+  vars:
+    schedtool: False
+    workload_id: 1
+    workload_size: large
+    delete_fio_read_files: 1
+    disk_kernel_rotational: 1
+    settings: 8
+    disk_kernel_io_scheduler: 'mq-deadline'
+    disk_kernel_bfq_low_latency: null
+    disk_kernel_mqdeadline_fifo_batch: 16
+    disk_kernel_mqdeadline_writes_starved: 2
+  tasks:
+  - name: Calculate device settings on the remote
+    script: calc_device_settings3.py
+    args:
+      executable: python3
+      chdir: "/mnt/data"
+    register: output
+
+  - set_fact:
+      calculated_settings: "{{ (output.stdout | from_json) }}"
+
+  - debug:
+      msg: "{{ settings }}"
+
+  - set_fact:
+      disk_kernel_max_sectors_kb: "{{ calculated_settings.max_sectors_kb }}"
+    when: calculated_settings.max_sectors_kb is defined
+
+  - set_fact:
+      disk_kernel_read_ahead_kb: "{{ calculated_settings.read_ahead_kb }}"
+    when: calculated_settings.read_ahead_kb is defined
+
+  - set_fact:
+      disk_kernel_queue_depth: "{{ calculated_settings.queue_depth }}"
+    when: calculated_settings.queue_depth is defined
+
+  - set_fact:
+      disk_kernel_nr_requests: "{{ calculated_settings.nr_requests }}"
+    when: calculated_settings.nr_requests is defined
+
+  - set_fact:
+      disk_kernel_io_scheduler: "{{ disk_kernel_io_scheduler }}"
+
+  - set_fact:
+      disk_kernel_mqdeadline_fifo_batch: "{{ disk_kernel_mqdeadline_fifo_batch }}"
+    when: disk_kernel_mqdeadline_fifo_batch is defined and disk_kernel_io_scheduler == 'mq-deadline'
+
+  - set_fact:
+      disk_kernel_mqdeadline_writes_starved: "{{ disk_kernel_mqdeadline_writes_starved }}"
+    when: disk_kernel_mqdeadline_writes_starved is defined and disk_kernel_io_scheduler == 'mq-deadline'
+
+  - set_fact:
+      disk_kernel_bfq_low_latency: "{{ disk_kernel_bfq_low_latency }}"
+    when: disk_kernel_bfq_low_latency is defined and disk_kernel_io_scheduler == 'bfq'
+
+  - set_fact:
+      disk_kernel_wbt_lat_usec: "{{ calculated_settings.wbt_lat_usec }}"
+    when: calculated_settings.wbt_lat_usec is defined
+
+  - set_fact:
+      disk_kernel_rotational: "{{ disk_kernel_rotational }}"
+
+  - name: Set kernel device parameters and run fio
+    block:
+      - name: Trim the filesystem
+        include_role:
+          name: data_disk
+          tasks_from: trim
+
+      - name: Set kernel device parameters
+        include_role:
+          name: disk_kernel
+
+      - name: Run fio jobs
+        vars:
+          fio_result_file: "{{ inventory_hostname }}-{{ settings }}.json"
+        include_role:
+          name: fio
+
+    rescue:
+      - name: Print when errors
+        debug:
+          msg: "Skipping this combination"
+
+
+# vim: set ft=yaml.ansible:
