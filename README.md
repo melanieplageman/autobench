@@ -190,7 +190,7 @@ Ansible project directory layout hints
 
 `site.yaml`: the main Ansible playbook in this project currently. It runs the VM role tasks. First it provisions the VMs and associated resources, then it runs a set up tasks to do setup on the provisioned VM, including loading a newer Linux kernel and restarting the VM. Though you can run the Postgres and TPC-DS roles on other hosts, currently the playbook is geared toward an environment where you can provision a brand new VM for the explicit purpose of doing this work.
 
-`tpcds.yaml`, `fio.yaml`, `fio_combinations.yaml`, `postgres.yaml`: These are the four main playbooks that currently exist. `fio.yaml` and `fio_combinations.yaml` will run the tasks in the `fio` role, as well as the dependent `disk_kernel` role which sets the kernel settings to those under test. Currently it is set to run only on an `azure_vm` host, however it is easy to change that. `postgres.yaml` will run the tasks in the `postgres` role as well as those in the `systemd-user` and `git` roles. `tpcds.yaml` will run the tasks in both the `postgres` role (and its dependencies) as well as the `tpcds` role.
+`tpcds.yaml`, `fio.yaml`, `fio_combinations.yaml`, `fio_auto.yaml`, `postgres.yaml`: These are the five main playbooks that currently exist. `fio.yaml`, `fio_combinations.yaml`, and `fio_auto.yaml` will run the tasks in the `fio` role, as well as the dependent `disk_kernel` role which sets the kernel settings to those under test. Currently it is set to run only on an `azure_vm` host, however it is easy to change that. `postgres.yaml` will run the tasks in the `postgres` role as well as those in the `systemd-user` and `git` roles. `tpcds.yaml` will run the tasks in both the `postgres` role (and its dependencies) as well as the `tpcds` role.
 
 If we start working on various TPC-DS performance experiments, it could be advantageous to create a profile with both various Postgres and TPC-DS settings which will be consumed by the `tpcds` role as well as used to generate a modified `postgresql.conf` file using a template in the `postgres` role. These could go in a new directory in the `profiles` directory.
 
@@ -214,7 +214,8 @@ This directory houses most of the tasks for all of the plays in this project.
   - `tasks`
     - `main.yaml` partitions, formats, and mounts a data disk on the target host
     - `trim.yaml` trims the file system and is meant to be used between write-heavy benchmarking runs
-    - `teardown.yaml` unmounts the file system
+    - `unmount.yaml` unmounts the file system
+    - `reset.yaml` unbinds and rebinds the storage driver from the device
   - `templates` contain templates for host vars to be set on the target hosts
 - `fio` role:
   - `defaults` contain parameters that the user may want to set

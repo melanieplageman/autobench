@@ -7,56 +7,56 @@
 - name: Either disable writeback throttling or set the target minimum read latency
   become: yes
   shell: >
-    echo "{{ disk_kernel_wbt_lat_usec | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/wbt_lat_usec"
+    echo "{{ disk_kernel_wbt_lat_usec | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/wbt_lat_usec"
 
 # IO scheduler on or off influences max value for nr_requests, so set it first
 - name: Change the IO scheduler to use specified scheduler
   become: yes
   shell: >
-    echo "{{ disk_kernel_io_scheduler | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/scheduler"
+    echo "{{ disk_kernel_io_scheduler | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/scheduler"
 
 - name: Change mq-deadline configuration value, fifo_batch
   become: yes
   shell: >
-    echo "{{ disk_kernel_mqdeadline_fifo_batch | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/iosched/fifo_batch"
+    echo "{{ disk_kernel_mqdeadline_fifo_batch | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/iosched/fifo_batch"
   when: disk_kernel_io_scheduler == 'mq-deadline'
 
 - name: Change mq-deadline configuration value, writes_starved
   become: yes
   shell: >
-    echo "{{ disk_kernel_mqdeadline_writes_starved | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/iosched/writes_starved"
+    echo "{{ disk_kernel_mqdeadline_writes_starved | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/iosched/writes_starved"
   when: disk_kernel_io_scheduler == 'mq-deadline'
 
 # The bfq scheduler module must also be loaded for this to succeed
 - name: Change bfq configuration value, low_latency
   become: yes
   shell: >
-    echo "{{ disk_kernel_bfq_low_latency | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/iosched/low_latency"
+    echo "{{ disk_kernel_bfq_low_latency | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/iosched/low_latency"
   when: disk_kernel_io_scheduler == 'bfq'
 
 - name: Change the number of requests to the specified number
   become: yes
   shell: >
-    echo "{{ disk_kernel_nr_requests | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/nr_requests"
+    echo "{{ disk_kernel_nr_requests | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/nr_requests"
 
 - name: Change rotational to the specified value
   become: yes
   shell: >
-    echo "{{ disk_kernel_rotational | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/rotational"
+    echo "{{ disk_kernel_rotational | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/rotational"
 
 - name: Limit max IO size to specified size
   become: yes
   shell: >
-    echo "{{ disk_kernel_max_sectors_kb | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/max_sectors_kb"
+    echo "{{ disk_kernel_max_sectors_kb | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/max_sectors_kb"
 
 - name: Set the readahead window to the specified value
   become: yes
   shell: >
-    echo "{{ disk_kernel_read_ahead_kb | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/queue/read_ahead_kb"
+    echo "{{ disk_kernel_read_ahead_kb | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/queue/read_ahead_kb"
 
 - name: Change the block device queue depth to specified value
   become: yes
   shell: >
-    echo "{{ disk_kernel_queue_depth | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device }}/device/queue_depth"
+    echo "{{ disk_kernel_queue_depth | quote }}" > "/sys/block/{{ ansible_local.disk_kernel_device_name }}/device/queue_depth"
 
 # vim: set ft=yaml.ansible:

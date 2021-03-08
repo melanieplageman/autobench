@@ -1,0 +1,5 @@
+#! /bin/bash
+
+partition="$(sudo sfdisk --json /dev/{{ ansible_local.disk_kernel_device_name | quote }} | jq -r '.partitiontable.partitions[0].node')"
+uuid="$(sudo blkid -s UUID -o value $partition)"
+echo "\"$uuid\""

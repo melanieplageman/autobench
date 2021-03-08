@@ -1,0 +1,30 @@
+# Unmount the device without removing its entry from fstab or removing the
+# mount point
+
+- name: Unmount the filesystem
+  become: yes
+  ansible.posix.mount:
+    path: "{{ data_disk_mount_dir }}"
+    state: unmounted
+
+# TODO: parameterize the specific storage driver
+# This can be done in defaults for this role once the need for a second driver arises
+- name: Unbind the device from the driver
+  become: yes
+  shell: >
+    echo -n "{{ ansible_local.data_disk_device_bus_id }}" > "/sys/bus/vmbus/drivers/hv_storvsc/unbind"
+
+- name: Bind the driver to the device
+  become: yes
+  shell: >
+    echo -n "{{ ansible_local.data_disk_device_bus_id }}" > "/sys/bus/vmbus/drivers/hv_storvsc/bind"
+
+- name: Mount the filesystem
+  become: yes
+  ansible.posix.mount:
+    path: "{{ data_disk_mount_dir }}"
+    src: UUID="{{ ansible_local.data_disk_device_partition_uuid }}"
+    fstype: ext4
+    state: mounted
+
+# vim: set ft=yaml.ansible:

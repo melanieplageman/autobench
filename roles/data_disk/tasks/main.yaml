@@ -2,16 +2,34 @@
   become: yes
   file: name=/etc/ansible/facts.d state=directory
 
-- name: Copy over custom fact on device to help disk_kernel role
+- name: Copy over custom fact on device name to help disk_kernel role
   become: yes
   template:
-    dest: /etc/ansible/facts.d/disk_kernel_device.fact
-    src: disk_kernel_device.fact.j2
+    dest: /etc/ansible/facts.d/disk_kernel_device_name.fact
+    src: disk_kernel_device_name.fact.j2
     mode: "0755"
-  register: disk_kernel_device_fact_file
+  register: disk_kernel_device_name_fact_file
 
+- name: Copy over custom fact on device bus ID
+  become: yes
+  template:
+    dest: /etc/ansible/facts.d/data_disk_device_bus_id.fact
+    src: data_disk_device_bus_id.fact.j2
+    mode: "0755"
+
+- name: Copy over custom fact on device partition UUID
+  become: yes
+  template:
+    dest: /etc/ansible/facts.d/data_disk_device_partition_uuid.fact
+    src: data_disk_device_partition_uuid.fact.j2
+    mode: "0755"
+
+# The device name may change on startup, as names seem to be assigned in a
+# round robin fashion according to hardware topology
+# The bus ID, however, should not change as long as we do not explicitly attach
+# a different drive
 - setup:
-  when: disk_kernel_device_fact_file.changed
+  when: disk_kernel_device_name_fact_file.changed
 
 # TODO: would prefer to use the device itself and not a partition,
 # but couldn't get it to mount successfully with just the device
@@ -21,6 +39,7 @@
     pkg:
       - parted
       - fdisk
+      - jq
 
 - name: Partition and format the disk
   become: yes
