@@ -519,6 +519,7 @@
   - name: Upgrade the Kernel Version
     import_role:
       name: kernel
+      tasks_from: custom_upgrade
 
   - name: Mount and Format the disk
     import_role:
