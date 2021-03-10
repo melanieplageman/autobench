@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS run (
 
   vm_id INTEGER NOT NULL REFERENCES vm(id),
 
+  nr_hw_queues INTEGER,
+
   kernel_nr_requests    INTEGER NOT NULL,
   kernel_max_sectors_kb INTEGER NOT NULL,
   kernel_read_ahead_kb  INTEGER NOT NULL,
@@ -130,4 +132,5 @@ INSERT INTO vm(
   ('Standard_F32s_v2', 32, 51200, 750, 512, 2656, 128, 2048, 'none', 75000),
   ('Standard_F48s_v2', 48, 76800, 1100, 512, 3985, 128, 2048, 'none', 75000),
   ('Standard_F64s_v2', 64, 80000, 1100, 512, 5313, 128, 2048, 'none', 75000),
-  ('Standard_F72s_v2', 72, 80000, 1100, 512, 5977, 128, 2048, 'none', 75000);
+  ('Standard_F72s_v2', 72, 80000, 1100, 512, 5977, 128, 2048, 'none', 75000),
+  ('Standard_E64s_v3', 64, 80000, 2000, 512, 5068, 128, 2048, 'none', 75000);

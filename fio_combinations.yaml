@@ -1,6 +1,7 @@
 - name: Set up and run FIO jobs
   hosts: big_disk_vms
   vars:
+    nr_hw_queues: 1
     fio_job_file: |
       [global]
       time_based=1
@@ -88,11 +89,35 @@
       ]) | map("combine") }}
 
   tasks:
+  - name: Set nr_hw_queues
+    include_role:
+      name: data_disk
+      tasks_from: nr_hw_queues
+    when: nr_hw_queues is defined
+
+  - name: Reset the device for nr_hw_queues value to take effect
+    include_role:
+      name: data_disk
+      tasks_from: reset
+    when: nr_hw_queues is defined
+
   - name: Run fio role for all combinations of settings
     include_role:
       name: loop_fio
     loop: "{{ fio_loop_agenda }}"
     loop_control:
       extended: yes
+
+  - name: Ensure nr_hw_queues is reset to 0
+    vars:
+      nr_hw_queues: 0
+    include_role:
+      name: data_disk
+      tasks_from: nr_hw_queues
+
+  - name: Reset the device for nr_hw_queues value to take effect
+    include_role:
+      name: data_disk
+      tasks_from: reset
 
 # vim: set ft=yaml.ansible:

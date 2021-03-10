@@ -1,3 +1,6 @@
+- name: Print nr_hw_queues value
+  debug: var=nr_hw_queues
+
 - name: Install fio
   become: yes
   apt: name=fio
@@ -78,6 +81,7 @@
       disk_id,
       disk_device,
       vm_id,
+      nr_hw_queues,
       kernel_nr_requests, kernel_max_sectors_kb,
       kernel_read_ahead_kb, kernel_queue_depth,
       kernel_wbt_lat_usec, kernel_rotational,
@@ -93,6 +97,7 @@
         (SELECT id FROM disk WHERE disk.size_gb = %(disk_size_gb)s),
         %(disk_device)s,
         (SELECT id FROM vm WHERE vm.instance_type = %(vm_instance_type)s),
+        %(nr_hw_queues)s,
         %(kernel_nr_requests)s, %(kernel_max_sectors_kb)s,
         %(kernel_read_ahead_kb)s, %(kernel_queue_depth)s,
         %(kernel_wbt_lat_usec)s, %(kernel_rotational)s,
@@ -108,6 +113,7 @@
       disk_size_gb: "{{ hostvars[inventory_hostname]['vm_data_disk_specs']['size_gb'] }}"
       disk_device: "{{ hostvars[inventory_hostname]['vm_data_disk_specs']['device'] }}"
       vm_instance_type: "{{ hostvars[inventory_hostname]['vm_instance_info']['specs']['instance_type'] }}"
+      nr_hw_queues: "{{ nr_hw_queues if (nr_hw_queues is defined) else none | default(none) }}"
       kernel_nr_requests: "{{ disk_kernel_nr_requests }}"
       kernel_max_sectors_kb: "{{ disk_kernel_max_sectors_kb }}"
       kernel_read_ahead_kb: "{{ disk_kernel_read_ahead_kb }}"

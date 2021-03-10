@@ -5,8 +5,21 @@
     workload_id: 1
     workload_size: large
     settings: 6
+    nr_hw_queues: 1
     delete_fio_read_files: 1
   tasks:
+  - name: Set nr_hw_queues
+    include_role:
+      name: data_disk
+      tasks_from: nr_hw_queues
+    when: nr_hw_queues is defined
+
+  - name: Reset the device for nr_hw_queues value to take effect
+    include_role:
+      name: data_disk
+      tasks_from: reset
+    when: nr_hw_queues is defined
+
   - set_fact:
       host_instance_disk: "{{ hostvars[inventory_hostname]['vm_instance_info']['specs']['instance_type'] }}_{{ hostvars[inventory_hostname]['vm_data_disk_specs']['size_gb'] }}"
 
@@ -78,5 +91,17 @@
       - name: Print when errors
         debug:
           msg: "Skipping this combination"
+
+  - name: Ensure nr_hw_queues is reset to 0
+    vars:
+      nr_hw_queues: 0
+    include_role:
+      name: data_disk
+      tasks_from: nr_hw_queues
+
+  - name: Reset the device for nr_hw_queues value to take effect
+    include_role:
+      name: data_disk
+      tasks_from: reset
 
 # vim: set ft=yaml.ansible:

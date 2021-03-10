@@ -1,0 +1,4 @@
+- name: Set nr_hw_queues for storvsc driver
+  become: yes
+  shell: >
+    echo "{{ nr_hw_queues }}" > "/sys/module/hv_storvsc/parameters/storvsc_max_hw_queues"

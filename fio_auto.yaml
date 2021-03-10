@@ -1,17 +1,30 @@
-- name: Test out running a script on a remote
-  hosts: vm122
+- name: Set up and run fio jobs configured with settings from a script
+  hosts: vm120
   vars:
     schedtool: False
     workload_id: 1
     workload_size: large
     delete_fio_read_files: 1
     disk_kernel_rotational: 1
-    settings: 8
+    nr_hw_queues: 1
+    settings: 4
     disk_kernel_io_scheduler: 'mq-deadline'
     disk_kernel_bfq_low_latency: null
     disk_kernel_mqdeadline_fifo_batch: 16
     disk_kernel_mqdeadline_writes_starved: 2
   tasks:
+  - name: Set nr_hw_queues
+    include_role:
+      name: data_disk
+      tasks_from: nr_hw_queues
+    when: nr_hw_queues is defined
+
+  - name: Reset the device for nr_hw_queues value to take effect
+    include_role:
+      name: data_disk
+      tasks_from: reset
+    when: nr_hw_queues is defined
+
   - name: Calculate device settings on the remote
     script: calc_device_settings3.py
     args:
@@ -85,5 +98,16 @@
         debug:
           msg: "Skipping this combination"
 
+  - name: Ensure nr_hw_queues is reset to 0
+    vars:
+      nr_hw_queues: 0
+    include_role:
+      name: data_disk
+      tasks_from: nr_hw_queues
+
+  - name: Reset the device for nr_hw_queues value to take effect
+    include_role:
+      name: data_disk
+      tasks_from: reset
 
 # vim: set ft=yaml.ansible:

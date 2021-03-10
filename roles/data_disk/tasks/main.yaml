@@ -33,7 +33,7 @@
 
 # TODO: would prefer to use the device itself and not a partition,
 # but couldn't get it to mount successfully with just the device
-- name: Install parted and fdisk
+- name: Install parted, fdisk, and jq
   become: yes
   apt:
     pkg:
