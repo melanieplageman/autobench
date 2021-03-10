@@ -7,7 +7,7 @@
     delete_fio_read_files: 1
     disk_kernel_rotational: 1
     nr_hw_queues: 1
-    settings: 4
+    settings: 5
     disk_kernel_io_scheduler: 'mq-deadline'
     disk_kernel_bfq_low_latency: null
     disk_kernel_mqdeadline_fifo_batch: 16
@@ -25,6 +25,10 @@
       tasks_from: reset
     when: nr_hw_queues is defined
 
+  - name: Install fio
+    become: yes
+    apt: name=fio
+
   - name: Calculate device settings on the remote
     script: calc_device_settings3.py
     args:
@@ -36,7 +40,7 @@
       calculated_settings: "{{ (output.stdout | from_json) }}"
 
   - debug:
-      msg: "{{ settings }}"
+      msg: "{{ calculated_settings }}"
 
   - set_fact:
       disk_kernel_max_sectors_kb: "{{ calculated_settings.max_sectors_kb }}"

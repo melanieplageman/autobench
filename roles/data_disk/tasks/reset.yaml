@@ -27,4 +27,12 @@
     fstype: ext4
     state: mounted
 
+- name: Change permissions and ownership of mounted disk
+  become: yes
+  file:
+    path: "{{ data_disk_mount_dir }}"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}" 
+    mode: '0755'
+
 # vim: set ft=yaml.ansible:

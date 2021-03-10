@@ -41,7 +41,7 @@
       - fdisk
       - jq
 
-- name: Partition and format the disk
+- name: Create a new partition on the drive
   become: yes
   parted:
     device: "{{ vm_data_disk_specs['device']|quote }}"
@@ -50,28 +50,28 @@
     name: data
     state: present
     number: 1
-  register: formatted_disk
+  register: partition_info
 
-- name: Unmount the filesystem in case it is mounted already
+- name: Unmount the chosen mount point, in case it is in use already
   become: yes
   ansible.posix.mount:
     path: "{{ data_disk_mount_dir }}"
     state: absent
 
-- name: Format the disk and build the filesystem
+- name: Format and build the new filesystem on the partition
   become: yes
   filesystem:
     fstype: ext4
-    dev: "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+    dev: "{{ partition_info.disk.dev }}{{ partition_info.partitions[0].num }}"
     opts: "-E lazy_itable_init=0,lazy_journal_init=0"
     force: yes
 
-- name: Given formatted disk partition information, get UUID
+- name: Get partition UUID
   become: yes
-  command: blkid -s UUID -o value "{{ formatted_disk.disk.dev }}{{ formatted_disk.partitions[0].num }}"
+  command: blkid -s UUID -o value "{{ partition_info.disk.dev }}{{ partition_info.partitions[0].num }}"
   register: uuid_data_disk_partition
 
-- name: Make a directory for the filesystem
+- name: Make the mount point if it doesn't exist
   become: yes
   file: path="{{ data_disk_mount_dir }}" state=directory
 
@@ -90,5 +90,7 @@
     owner: "{{ ansible_user_id }}"
     group: "{{ ansible_user_id }}" 
     mode: '0755'
+
+- setup:
 
 # vim: set ft=yaml.ansible:
