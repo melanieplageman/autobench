@@ -23,7 +23,7 @@
   become: yes
   ansible.posix.mount:
     path: "{{ data_disk_mount_dir }}"
-    src: UUID="{{ ansible_local.data_disk_device_partition_uuid }}"
+    src: "{{ vm_data_disk_specs['device'] }}"
     fstype: ext4
     state: mounted
 

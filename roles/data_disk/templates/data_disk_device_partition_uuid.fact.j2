@@ -1,5 +1,0 @@
-#! /bin/bash
-
-partition="$(sudo sfdisk --json {{ vm_data_disk_specs['device'] | quote }} | jq -r '.partitiontable.partitions[0].node')"
-uuid="$(sudo blkid -s UUID -o value $partition)"
-echo "\"$uuid\""

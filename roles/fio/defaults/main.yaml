@@ -1,6 +1,6 @@
 # TODO: look this up based on device provided by user in Ansible facts or pass it as a flag
 # unfortunately can't use target_directory from azure_vm because it has to be host-agnostic
-fio_target_directory: /mnt/data
+fio_target_directory: /var/lib/autobench
 
 # This is the result of an fio run. The actual file itself will be written to
 # {{ ansible_user_dir }}/fio_output/{{ result_file }} on the target host

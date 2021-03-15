@@ -1,6 +1,7 @@
 - name: Set up and run fio jobs configured with settings from a script
   hosts: vm120
   vars:
+    fio_target_directory: /var/lib/autobench
     schedtool: False
     workload_id: 1
     workload_size: large
@@ -33,7 +34,7 @@
     script: calc_device_settings3.py
     args:
       executable: python3
-      chdir: "/mnt/data"
+      chdir: "{{ fio_target_directory }}"
     register: output
 
   - set_fact:

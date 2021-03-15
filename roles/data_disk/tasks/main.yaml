@@ -17,13 +17,6 @@
     src: data_disk_device_bus_id.fact.j2
     mode: "0755"
 
-- name: Copy over custom fact on device partition UUID
-  become: yes
-  template:
-    dest: /etc/ansible/facts.d/data_disk_device_partition_uuid.fact
-    src: data_disk_device_partition_uuid.fact.j2
-    mode: "0755"
-
 # The device name may change on startup, as names seem to be assigned in a
 # round robin fashion according to hardware topology
 # The bus ID, however, should not change as long as we do not explicitly attach
@@ -31,8 +24,6 @@
 - setup:
   when: disk_kernel_device_name_fact_file.changed
 
-# TODO: would prefer to use the device itself and not a partition,
-# but couldn't get it to mount successfully with just the device
 - name: Install parted, fdisk, and jq
   become: yes
   apt:
@@ -41,35 +32,19 @@
       - fdisk
       - jq
 
-- name: Create a new partition on the drive
-  become: yes
-  parted:
-    device: "{{ vm_data_disk_specs['device']|quote }}"
-    label: gpt
-    fs_type: ext4
-    name: data
-    state: present
-    number: 1
-  register: partition_info
-
 - name: Unmount the chosen mount point, in case it is in use already
   become: yes
   ansible.posix.mount:
     path: "{{ data_disk_mount_dir }}"
     state: absent
 
-- name: Format and build the new filesystem on the partition
+- name: Format and build the filesystem
   become: yes
   filesystem:
     fstype: ext4
-    dev: "{{ partition_info.disk.dev }}{{ partition_info.partitions[0].num }}"
+    dev: "{{ vm_data_disk_specs['device'] }}"
     opts: "-E lazy_itable_init=0,lazy_journal_init=0"
     force: yes
-
-- name: Get partition UUID
-  become: yes
-  command: blkid -s UUID -o value "{{ partition_info.disk.dev }}{{ partition_info.partitions[0].num }}"
-  register: uuid_data_disk_partition
 
 - name: Make the mount point if it doesn't exist
   become: yes
@@ -79,11 +54,11 @@
   become: yes
   ansible.posix.mount:
     path: "{{ data_disk_mount_dir }}"
-    src: UUID="{{ uuid_data_disk_partition.stdout }}"
+    src: "{{ vm_data_disk_specs['device'] }}"
     fstype: ext4
     state: mounted
 
-- name: Change permissions and ownership of mounted disk
+- name: Change permissions and ownership of mounted device
   become: yes
   file:
     path: "{{ data_disk_mount_dir }}"
